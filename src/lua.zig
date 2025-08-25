@@ -31,6 +31,10 @@ fn lua_init_robot(L: *Lua) callconv(.c) c_int {
     const pos_y = L.toNumber(3) catch return 1;
 
     Robot.init(name, @floatCast(pos_x), @floatCast(pos_y));
+
+
+    std.debug.print("> Robot Named: {s} Has Been Created\n", .{name});
+
     return 0;
 }
 
