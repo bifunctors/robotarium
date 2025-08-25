@@ -12,6 +12,10 @@
             .url = "git+https://github.com/natecraddock/ziglua#bf9fc6e6d9c24d5ba53b20acdab657f2fe6cb762",
             .hash = "zlua-0.1.0-hGRpC444BQDrHc6QhcEeGh1eWMwFbl-c21vlGPWjKBfQ",
         },
+        .entt = .{
+            .url = "git+https://github.com/prime31/zig-ecs#1616fe6b750f7a62684ac955471f1357ceeb08d3",
+            .hash = "entt-1.0.0-qJPtbLvWAgA7zKldpRMGFZJtdyCpmMekcT8T7dF1w5Wt",
+        },
     },
     .paths = .{
         "build.zig",
