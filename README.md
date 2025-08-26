@@ -16,3 +16,5 @@ Programming game about little robots
 - Only move set radius away from base / waypoint?
 
 - Have Robots Spawn in radius around home
+
+- Notification System

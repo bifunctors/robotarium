@@ -39,8 +39,27 @@ fn render_homes() void {
             TILE_SIZE * ftoi(size.y),
             .purple,
         );
+
+        // Display Range of home
+        const home_center_x = pos.x + (size.x / 2.0);
+        const home_center_y = pos.y + (size.y / 2.0);
+
+        // Add 1 to include the boundary tiles
+        const range_size = @as(f32, @floatFromInt(home.range * 2 + 1));
+        const border_x = toi(home_center_x - @as(f32, @floatFromInt(home.range))) * TILE_SIZE;
+        const border_y = toi(home_center_y - @as(f32, @floatFromInt(home.range))) * TILE_SIZE;
+        const border_width = TILE_SIZE * ftoi(range_size);
+        const border_height = TILE_SIZE * ftoi(range_size);
+
+        const border_thickness = 3;
+
+        rl.drawRectangle(border_x, border_y, border_width, border_thickness, .blue);
+        rl.drawRectangle(border_x, border_y + border_height - border_thickness, border_width, border_thickness, .blue);
+        rl.drawRectangle(border_x, border_y, border_thickness, border_height, .blue);
+        rl.drawRectangle(border_x + border_width - border_thickness, border_y, border_thickness, border_height, .blue);
     }
 }
+
 
 pub fn render_tilemap(map: *const Arraylist(TileType)) void {
     const cols: i32 = TILEMAP_WIDTH;

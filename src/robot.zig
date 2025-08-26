@@ -3,6 +3,8 @@ const ecs = @import("ecs");
 const comp = @import("component.zig");
 const tilemap = @import("tilemap.zig");
 const ftoi = @import("utils.zig").ftoi;
+const itof = @import("utils.zig").itof;
+const utof = @import("utils.zig").utof;
 const Home = @import("game/home.zig").Home;
 const ArrayList = std.ArrayList;
 
@@ -10,8 +12,8 @@ pub const Robot = struct {
     id: usize,
     name: []const u8,
     home_id: usize,
-    // This is the position relative to "Home"
     relative_position: comp.Position,
+    has_moved: bool = false,
 
     var next_robot_id: usize = 1;
 
@@ -135,7 +137,18 @@ pub const Robot = struct {
         return null;
     }
 
+    pub fn reset_turn(robot: *Robot) void {
+        robot.has_moved = false;
+    }
+
     pub fn move(robot: *Robot, dir: []const u8) void {
+
+        if(robot.has_moved) {
+            std.debug.print("Robot has already moved this turn!\n", .{});
+            return;
+        }
+
+
         if (std.mem.eql(u8, dir, "north"))
             robot.forward();
         if (std.mem.eql(u8, dir, "south"))
@@ -144,6 +157,8 @@ pub const Robot = struct {
             robot.left();
         if (std.mem.eql(u8, dir, "east"))
             robot.right();
+
+        robot.has_moved = true;
     }
 
     pub fn can_move(robot: *Robot, dir: []const u8) bool {
@@ -192,8 +207,6 @@ pub const Robot = struct {
         return square == .NONE;
     }
 
-    const HOME_RANGE = 10;
-
     pub fn check_within_range(robot: *Robot, x_offset: f32, y_offset: f32) bool {
         const pos = robot.get_world_position() orelse return false;
 
@@ -203,6 +216,8 @@ pub const Robot = struct {
         const dx = @abs((pos.x + x_offset) - home_pos.x);
         const dy = @abs((pos.y + y_offset) - home_pos.y);
 
-        return dx <= HOME_RANGE and dy <= HOME_RANGE;
+        const range = home.range;
+
+        return dx <= utof(range) and dy <= utof(range);
     }
 };

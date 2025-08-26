@@ -6,6 +6,10 @@ pub fn ftou(x: f32) usize {
     return @as(usize, @intFromFloat(x));
 }
 
+pub fn utof(x: usize) f32 {
+    return @as(f32, @floatFromInt(x));
+}
+
 pub fn itof(x: i32) f32 {
     return @as(f32, @floatFromInt(x));
 }

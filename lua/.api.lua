@@ -10,4 +10,3 @@ function Game.createRobot(name) end
 function Game.console(msg) end
 
 return Game
-

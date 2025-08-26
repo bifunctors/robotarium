@@ -26,6 +26,14 @@ pub fn lua_main() !void {
 }
 
 pub fn lua_loop() !void {
+
+    const robots = Robot.get_all() catch return;
+
+    for(robots) |robot| {
+        robot.reset_turn();
+    }
+
+
     create_robots_table();
     _ = lua_state.getGlobal("Update") catch {
         std.debug.print("No update() function found in main.lua\n", .{});
