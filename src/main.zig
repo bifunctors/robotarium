@@ -6,6 +6,7 @@ const comp = @import("component.zig");
 const ecs = @import("ecs");
 const tilemap = @import("tilemap.zig");
 const renderer = @import("render.zig");
+const Player = @import("game/player.zig").Player;
 const print = std.debug.print;
 
 pub const WIDTH = 1500;
@@ -29,10 +30,12 @@ pub fn main() anyerror!void {
 
     const map = try tilemap.generate_map();
 
-    try lua.init_lua();
+    const home_id = try Player.init("Bilbo Baggings");
+
+    try lua.init_lua(home_id);
     defer lua.deinit_lua() catch unreachable;
 
-    try lua.run_lua_init();
+    try lua.lua_main();
 
     var last_frame_time = rl.getTime();
     var second_timer: f32 = 0;
@@ -45,7 +48,7 @@ pub fn main() anyerror!void {
         second_timer += dt;
 
         if (second_timer >= 1) {
-            try lua.run_lua_loop();
+            try lua.lua_loop();
             second_timer = 0;
         }
 
@@ -60,6 +63,8 @@ pub fn main() anyerror!void {
         renderer.render(&map);
 
         rl.endMode2D();
+
+        rl.drawFPS(20, 20);
     }
 }
 
@@ -69,7 +74,7 @@ fn input() void {
 
     camera.zoom = std.math.exp(std.math.log(f32, std.math.e, camera.zoom) + (rl.getMouseWheelMove() * 0.1));
     if (camera.zoom > 2) camera.zoom = 2;
-    if (camera.zoom < 0.3) camera.zoom = 0.3;
+    if (camera.zoom < 0.1) camera.zoom = 0.1;
 
     if (rl.isKeyDown(.d))
         camera.target.x += 2;
@@ -100,5 +105,5 @@ fn input() void {
 
 fn init_raylib() void {
     rl.initWindow(WIDTH, HEIGHT, "Scan");
-    rl.setTargetFPS(240);
+    rl.setTargetFPS(120);
 }

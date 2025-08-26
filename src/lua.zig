@@ -1,21 +1,17 @@
 const std = @import("std");
 const zlua = @import("zlua");
 const Robot = @import("robot.zig").Robot;
+const ecs = @import("ecs");
 const robot_api = @import("lua_robot_api.zig");
+const tilemap = @import("tilemap.zig");
 const comp = @import("component.zig");
 const Lua = zlua.Lua;
 
 var lua_state: *Lua = undefined;
-const non_robot_names = [_][]const u8{
-    "init",
-    "game_api",
-    "api",
-    "robot_api"
-};
+var current_home_id: usize = 0;
 
-const ROBOT_API_KEY = "robot_api";
-
-pub fn init_lua() !void {
+pub fn init_lua(home_id: usize) !void {
+    current_home_id = home_id;
     lua_state = try Lua.init(std.heap.page_allocator);
     lua_state.openLibs();
     register_lua_functions(lua_state);
@@ -25,84 +21,69 @@ pub fn deinit_lua() !void {
     lua_state.deinit();
 }
 
-pub fn run_lua_init() !void {
-    try lua_state.doFile("lua/init.lua");
+pub fn lua_main() !void {
+    try lua_state.doFile("lua/main.lua");
 }
 
-pub fn run_lua_loop() !void {
-    const path = "lua";
-    const alloc = std.heap.page_allocator;
+pub fn lua_loop() !void {
+    create_robots_table();
+    _ = lua_state.getGlobal("Update") catch {
+        std.debug.print("No update() function found in main.lua\n", .{});
+        return;
+    };
 
-    lua_state.pushNil();
-    lua_state.setGlobal("Robot");
+    if(lua_state.isFunction(-1)) {
+        lua_state.call(.{ .results = 0, .args = 0});
+    } else {
+        std.debug.print("Update is not a function\n", .{});
+        lua_state.pop(1);
+    }
+}
 
+fn create_robots_table() void {
+    lua_state.newTable();
+    var idx: c_int = 1;
 
-    var dir = try std.fs.cwd().openDir(path, .{ .iterate = true });
-    defer dir.close();
+    const robots = Robot.get_all() catch return;
 
-    var walker = try dir.walk(alloc);
-    defer walker.deinit();
-
-    outer: while(try walker.next()) |entry| {
-        if(entry.kind != .file) continue;
-
-        var it = std.mem.splitScalar(u8, entry.basename, '.');
-        const first_part = it.first();
-        const extension = it.next();
-
-        if(extension == null) continue;
-        if(!std.mem.eql(u8, extension.?, "lua")) continue;
-
-        for(non_robot_names) |non_robot_name| {
-            if(std.mem.eql(u8, non_robot_name, first_part))
-                continue :outer;
-        }
-
-        // Robot for the file
-        const robot = Robot.get_name(first_part) orelse continue;
-
-        const initial_stack = lua_state.getTop();
-
+    for(robots) |robot| {
         lua_state.newTable();
 
         lua_state.pushInteger(@as(c_long, @intCast(robot.id)));
         lua_state.setField(-2, "id");
 
-        const robot_pos = robot.get_position() orelse &comp.Position{ .x = 0, .y = 0 };
+        const robot_pos = robot.get_world_position() orelse comp.Position{ .x = 0, .y = 0 };
 
-        lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.x)));
+        lua_state.pushInteger(@as(c_long, @intFromFloat(robot.relative_position.x)));
         lua_state.setField(-2, "x");
 
-        lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.y)));
+        lua_state.pushInteger(@as(c_long, @intFromFloat(robot.relative_position.y)));
         lua_state.setField(-2, "y");
 
-        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_forward));
-        lua_state.setField(-2, "forward");
+        lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.x)));
+        lua_state.setField(-2, "worldX");
 
-        lua_state.setGlobal("Robot");
+        lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.y)));
+        lua_state.setField(-2, "worldY");
 
-        const allocator = std.heap.page_allocator;
-        const full_path = try std.fs.path.join(allocator, &[_][]const u8{ path, entry.path });
-        defer allocator.free(full_path);
+        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_move));
+        lua_state.setField(-2, "move");
 
-        var buf: [100]u8 = undefined;
-        const file = try std.fmt.bufPrintZ(&buf, "{s}", .{full_path});
+        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_move));
+        lua_state.setField(-2, "canMove");
 
-        try lua_state.doFile(file);
-
-        lua_state.setTop(initial_stack);
+        lua_state.rawSetIndex(-2, idx);
+        idx += 1;
     }
+
+    lua_state.setGlobal("robots");
 }
 
 fn lua_create_robot(L: *Lua) callconv(.c) c_int {
     // Check if able to create robot
     const name = L.toString(1) catch return 1;
 
-    const rand = std.crypto.random;
-    const x = rand.intRangeAtMost(i8, -5, 5);
-    const y = rand.intRangeAtMost(i8, -5, 5);
-
-    _ = Robot.init(name, @floatFromInt(x), @floatFromInt(y)) catch {
+    Robot.init(name, current_home_id) catch {
         std.debug.print("Could not create robot\n", .{});
         return 0;
     };

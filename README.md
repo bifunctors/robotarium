@@ -6,8 +6,13 @@ Programming game about little robots
 
 ## Lua overview
 
-- Init script = 'init.lua'
-- Maybe also a general script called 'loop.lua', agnostic of individual robots?
-- Each robot has their own file = 'robot_name.lua'
+- 'main.lua'
 - Robots can send signals?
 - Use global table of robots in lua?
+-
+
+- Home Base, Coordinates are relative to it?
+
+- Only move set radius away from base / waypoint?
+
+- Have Robots Spawn in radius around home
