@@ -10,10 +10,11 @@ const TileType = tilemap.TileType;
 const TILEMAP_WIDTH = tilemap.TILEMAP_WIDTH;
 const TILE_SIZE = tilemap.TILE_SIZE;
 
-pub fn render(map: *const Arraylist(TileType)) void {
+pub fn render(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
     render_tilemap(map);
     render_homes();
     render_robots();
+    render_mouse(map, camera);
 }
 
 fn render_robots() void {
@@ -39,24 +40,42 @@ fn render_homes() void {
             TILE_SIZE * ftoi(size.y),
             .purple,
         );
+    }
+}
 
-        // Display Range of home
-        const home_center_x = pos.x + (size.x / 2.0);
-        const home_center_y = pos.y + (size.y / 2.0);
+fn render_mouse(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
+    const mouse_pos = rl.getMousePosition();
+    const world_mouse_pos = rl.getScreenToWorld2D(mouse_pos, camera.*);
 
-        // Add 1 to include the boundary tiles
-        const range_size = @as(f32, @floatFromInt(home.range * 2 + 1));
-        const border_x = toi(home_center_x - @as(f32, @floatFromInt(home.range))) * TILE_SIZE;
-        const border_y = toi(home_center_y - @as(f32, @floatFromInt(home.range))) * TILE_SIZE;
-        const border_width = TILE_SIZE * ftoi(range_size);
-        const border_height = TILE_SIZE * ftoi(range_size);
+    const tile_x = ftoi(world_mouse_pos.x / TILE_SIZE);
+    const tile_y = ftoi(world_mouse_pos.y / TILE_SIZE);
 
-        const border_thickness = 3;
+    // Check if the tile coordinates are within bounds
+    const cols: i32 = TILEMAP_WIDTH;
+    const rows: i32 = @intCast(map.items.len / TILEMAP_WIDTH);
 
-        rl.drawRectangle(border_x, border_y, border_width, border_thickness, .blue);
-        rl.drawRectangle(border_x, border_y + border_height - border_thickness, border_width, border_thickness, .blue);
-        rl.drawRectangle(border_x, border_y, border_thickness, border_height, .blue);
-        rl.drawRectangle(border_x + border_width - border_thickness, border_y, border_thickness, border_height, .blue);
+    if (tile_x >= 0 and tile_x < cols and tile_y >= 0 and tile_y < rows) {
+        // Calculate pixel position of the tile
+        const highlight_x = tile_x * TILE_SIZE;
+        const highlight_y = tile_y * TILE_SIZE;
+
+        // Draw highlight overlay with semi-transparent color
+        rl.drawRectangle(
+            highlight_x,
+            highlight_y,
+            TILE_SIZE,
+            TILE_SIZE,
+            rl.Color{ .r = 255, .g = 255, .b = 0, .a = 100 } // Semi-transparent yellow
+        );
+
+        // Optional: Draw border for better visibility
+        rl.drawRectangleLines(
+            highlight_x,
+            highlight_y,
+            TILE_SIZE,
+            TILE_SIZE,
+            rl.Color.yellow
+        );
     }
 }
 

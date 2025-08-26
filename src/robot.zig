@@ -26,40 +26,75 @@ pub const Robot = struct {
         const name_copy = try std.heap.page_allocator.alloc(u8, name.len);
         std.mem.copyForwards(u8, name_copy, name);
 
-        const relative_position = comp.Position{ .x = 0, .y = 1 };
+        const home = Home.get_id(home_id) orelse return;
+        const pos = home.get_position() orelse return;
+        std.debug.print("Home Position Is: {}\n", .{pos});
+        // const size = home.get_size() orelse return;
 
-        reg.add(entity, Robot{
+        const relative_position = find_valid_spawn_position(home, pos) orelse {
+            std.debug.print("Could not find valid spawn position for robot!\n", .{});
+            return;
+        };
+
+        std.debug.print("Suitable Relative Position At: {}\n", .{relative_position});
+
+        const r = Robot{
             .name = name_copy,
             .id = id,
             .relative_position = relative_position,
             .home_id = home_id,
-        });
+        };
 
-        const home = Home.get_id(home_id) orelse return;
-        const pos = home.get_position() orelse return;
-        std.debug.print("Home Position Is: {}\n", .{pos});
-        const size = home.get_size() orelse return;
+        reg.add(entity, r);
 
-        const x = pos.x;
-        const y = pos.y + (size.y) - 1;
-
-        const square_data = tilemap.check_square(
-            ftoi(x + relative_position.x),
-            ftoi(y + relative_position.y),
-        );
-
-        std.debug.print("At Square:{},{}, there is {}\n", .{
-            x + relative_position.x,
-            y + relative_position.y,
-            square_data,
-        });
-
-        reg.add(entity, comp.Position{ .x = x, .y = y });
+        reg.add(entity, comp.Position{ .x = pos.x + relative_position.x, .y = pos.y + relative_position.y });
         reg.add(entity, comp.Size{ .x = 1, .y = 1 });
     }
 
     pub fn deinit(robot: *Robot) void {
         std.heap.page_allocator.free(robot.name);
+    }
+
+    fn find_valid_spawn_position(home: *Home, home_pos: *comp.Position) ?comp.Position {
+        const range = @as(i32, @intCast(home.range - 1));
+
+        // Try up to 100 random positions within range
+        var attempts: u32 = 0;
+        while (attempts < 100) : (attempts += 1) {
+            // Generate random position within the range square
+            const random = std.crypto.random;
+            const offset_x = random.intRangeAtMost(i32, -range, range);
+            const offset_y = random.intRangeAtMost(i32, -range, range);
+
+            const test_x = home_pos.x + @as(f32, @floatFromInt(offset_x));
+            const test_y = home_pos.y + @as(f32, @floatFromInt(offset_y));
+
+            const tile_type = tilemap.check_square(ftoi(test_x), ftoi(test_y));
+
+            // Check if position is valid (not occupied and within bounds)
+            if (tile_type == .NONE) {
+                return comp.Position{ .x = itof(offset_x), .y = itof(offset_y) };
+            }
+        }
+
+        // Fallback: try systematic search if random failed
+        var y: i32 = -range;
+        while (y <= range) : (y += 1) {
+            var x: i32 = -range;
+            while (x <= range) : (x += 1) {
+                const test_x = home_pos.x + @as(f32, @floatFromInt(x));
+                const test_y = home_pos.y + @as(f32, @floatFromInt(y));
+
+                const tile_type = tilemap.check_square(ftoi(test_x), ftoi(test_y));
+
+                if (tile_type == .NONE) {
+                    // FIX: Return relative offsets, not absolute coordinates
+                    return comp.Position{ .x = itof(x), .y = itof(y) };
+                }
+            }
+        }
+
+        return null; // No valid position found
     }
 
     pub fn get_all() ![]*Robot {
@@ -142,12 +177,10 @@ pub const Robot = struct {
     }
 
     pub fn move(robot: *Robot, dir: []const u8) void {
-
-        if(robot.has_moved) {
+        if (robot.has_moved) {
             std.debug.print("Robot has already moved this turn!\n", .{});
             return;
         }
-
 
         if (std.mem.eql(u8, dir, "north"))
             robot.forward();
@@ -175,28 +208,28 @@ pub const Robot = struct {
     }
 
     pub fn forward(robot: *Robot) void {
-        if(!check_movable_tile(robot, 0, -1)) return;
+        if (!check_movable_tile(robot, 0, -1)) return;
         robot.relative_position.y -= 1;
     }
 
     pub fn backward(robot: *Robot) void {
-        if(!check_movable_tile(robot, 0, 1)) return;
+        if (!check_movable_tile(robot, 0, 1)) return;
         robot.relative_position.y += 1;
     }
 
     pub fn left(robot: *Robot) void {
-        if(!check_movable_tile(robot, -1, 0)) return;
+        if (!check_movable_tile(robot, -1, 0)) return;
         robot.relative_position.x -= 1;
     }
 
     pub fn right(robot: *Robot) void {
-        if(!check_movable_tile(robot, 1, 0)) return;
+        if (!check_movable_tile(robot, 1, 0)) return;
         robot.relative_position.x += 1;
     }
 
     pub fn check_movable_tile(robot: *Robot, x_offset: f32, y_offset: f32) bool {
-        if(!check_within_range(robot, x_offset, y_offset)) return false;
-        if(!check_tile_not_taken(robot, x_offset, y_offset)) return false;
+        if (!check_within_range(robot, x_offset, y_offset)) return false;
+        if (!check_tile_not_taken(robot, x_offset, y_offset)) return false;
 
         return true;
     }

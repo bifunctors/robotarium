@@ -19,7 +19,7 @@ var camera = rl.Camera2D{
     ),
     .offset = rl.Vector2.init(WIDTH / 2, HEIGHT / 2),
     .rotation = 0,
-    .zoom = 1,
+    .zoom = 0.5,
 };
 
 pub fn main() anyerror!void {
@@ -60,7 +60,7 @@ pub fn main() anyerror!void {
 
         rl.beginMode2D(camera);
 
-        renderer.render(&map);
+        renderer.render(&map, &camera);
 
         rl.endMode2D();
 
@@ -96,7 +96,7 @@ fn input() void {
     if (rl.isKeyDown(.j))
         camera.target.y += 2;
 
-    if (rl.isMouseButtonDown(.left)) {
+    if (rl.isMouseButtonDown(.middle)) {
         var delta = rl.getMouseDelta();
         delta = rl.Vector2.scale(delta, -1.0 / camera.zoom);
         camera.target = rl.Vector2.add(camera.target, delta);
