@@ -1,3 +1,3 @@
 Game.console("Hello From Lua")
+Game.createRobot("jeff")
 
-Game.init_robot("Jim", 20, 20)

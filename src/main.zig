@@ -5,10 +5,11 @@ const lua = @import("lua.zig");
 const comp = @import("component.zig");
 const ecs = @import("ecs");
 const tilemap = @import("tilemap.zig");
+const renderer = @import("render.zig");
 const print = std.debug.print;
 
-pub const WIDTH = 800;
-pub const HEIGHT = 450;
+pub const WIDTH = 1500;
+pub const HEIGHT = 800;
 
 var camera = rl.Camera2D{
     .target = rl.Vector2.init((tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2,
@@ -22,19 +23,22 @@ pub fn main() anyerror!void {
     init_raylib();
     defer rl.closeWindow();
 
-    comp.ECS_REG = ecs.Registry.init(std.heap.page_allocator);
+    comp.init_registry(ecs.Registry.init(std.heap.page_allocator));
 
     const map = try tilemap.generate_map();
 
+    try lua.init_lua();
+    defer lua.deinit_lua() catch unreachable;
+
     try lua.run_lua_init();
+
+    try lua.run_lua_loop();
 
     while (!rl.windowShouldClose()) {
         input();
 
-        try lua.run_lua_loop();
-
-        if (camera.zoom > 3.0) camera.zoom = 3.0;
-        if (camera.zoom < 0.1) camera.zoom = 0.1;
+        if (camera.zoom > 2) camera.zoom = 2;
+        if (camera.zoom < 0.3) camera.zoom = 0.3;
 
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -42,7 +46,7 @@ pub fn main() anyerror!void {
 
         rl.beginMode2D(camera);
 
-        tilemap.render_tilemap(&map);
+        renderer.render(&map);
 
         rl.endMode2D();
     }
@@ -56,14 +60,22 @@ fn input() void {
 
     if(rl.isKeyDown(.d))
         camera.target.x += 2;
+    if(rl.isKeyDown(.l))
+        camera.target.x += 2;
 
     if(rl.isKeyDown(.a))
+        camera.target.x -= 2;
+    if(rl.isKeyDown(.h))
         camera.target.x -= 2;
 
     if(rl.isKeyDown(.w))
         camera.target.y -= 2;
+    if(rl.isKeyDown(.k))
+        camera.target.y -= 2;
 
     if(rl.isKeyDown(.s))
+        camera.target.y += 2;
+    if(rl.isKeyDown(.j))
         camera.target.y += 2;
 
     if(rl.isMouseButtonDown(.left)) {
