@@ -12,11 +12,13 @@ pub const WIDTH = 1500;
 pub const HEIGHT = 800;
 
 var camera = rl.Camera2D{
-    .target = rl.Vector2.init((tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2,
-    (tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2),
+    .target = rl.Vector2.init(
+        (tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2,
+        (tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2,
+    ),
     .offset = rl.Vector2.init(WIDTH / 2, HEIGHT / 2),
     .rotation = 0,
-    .zoom = 1
+    .zoom = 1,
 };
 
 pub fn main() anyerror!void {
@@ -32,13 +34,22 @@ pub fn main() anyerror!void {
 
     try lua.run_lua_init();
 
-    try lua.run_lua_loop();
+    var last_frame_time = rl.getTime();
+    var second_timer: f32 = 0;
 
     while (!rl.windowShouldClose()) {
-        input();
+        const current_time = rl.getTime();
+        const dt: f32 = @as(f32, @floatCast(current_time - last_frame_time)) * 1;
+        last_frame_time = current_time;
 
-        if (camera.zoom > 2) camera.zoom = 2;
-        if (camera.zoom < 0.3) camera.zoom = 0.3;
+        second_timer += dt;
+
+        if (second_timer >= 1) {
+            try lua.run_lua_loop();
+            second_timer = 0;
+        }
+
+        input();
 
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -53,34 +64,36 @@ pub fn main() anyerror!void {
 }
 
 fn input() void {
-    if(rl.isKeyPressed(.q))
+    if (rl.isKeyPressed(.q))
         std.process.exit(0);
 
-    camera.zoom = std.math.exp(std.math.log(f32, std.math.e, camera.zoom) + (rl.getMouseWheelMove()*0.1));
+    camera.zoom = std.math.exp(std.math.log(f32, std.math.e, camera.zoom) + (rl.getMouseWheelMove() * 0.1));
+    if (camera.zoom > 2) camera.zoom = 2;
+    if (camera.zoom < 0.3) camera.zoom = 0.3;
 
-    if(rl.isKeyDown(.d))
+    if (rl.isKeyDown(.d))
         camera.target.x += 2;
-    if(rl.isKeyDown(.l))
+    if (rl.isKeyDown(.l))
         camera.target.x += 2;
 
-    if(rl.isKeyDown(.a))
+    if (rl.isKeyDown(.a))
         camera.target.x -= 2;
-    if(rl.isKeyDown(.h))
+    if (rl.isKeyDown(.h))
         camera.target.x -= 2;
 
-    if(rl.isKeyDown(.w))
+    if (rl.isKeyDown(.w))
         camera.target.y -= 2;
-    if(rl.isKeyDown(.k))
+    if (rl.isKeyDown(.k))
         camera.target.y -= 2;
 
-    if(rl.isKeyDown(.s))
+    if (rl.isKeyDown(.s))
         camera.target.y += 2;
-    if(rl.isKeyDown(.j))
+    if (rl.isKeyDown(.j))
         camera.target.y += 2;
 
-    if(rl.isMouseButtonDown(.left)) {
+    if (rl.isMouseButtonDown(.left)) {
         var delta = rl.getMouseDelta();
-        delta = rl.Vector2.scale(delta, -1.0/camera.zoom);
+        delta = rl.Vector2.scale(delta, -1.0 / camera.zoom);
         camera.target = rl.Vector2.add(camera.target, delta);
     }
 }

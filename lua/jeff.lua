@@ -1,2 +1,2 @@
-print("Hello")
+print(Robot.x .. ", " .. Robot.y)
 Robot.forward()
