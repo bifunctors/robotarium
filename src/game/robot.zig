@@ -2,6 +2,7 @@ const std = @import("std");
 const ecs = @import("ecs");
 const comp = @import("../component.zig");
 const tilemap = @import("../tilemap.zig");
+const globals = @import("../globals.zig");
 const ftoi = @import("../utils.zig").ftoi;
 const itof = @import("../utils.zig").itof;
 const utof = @import("../utils.zig").utof;
@@ -13,7 +14,7 @@ pub const Robot = struct {
     name: []const u8,
     home_id: usize,
     relative_position: comp.Position,
-    has_moved: bool = false,
+    last_move_tick: u64 = 0,
 
     var next_robot_id: usize = 1;
 
@@ -58,10 +59,9 @@ pub const Robot = struct {
     fn find_valid_spawn_position(_: *Home, home_pos: *comp.Position) ?comp.Position {
         const range = 8;
 
-        // Try up to 100 random positions within range
+        // Try random positions
         var attempts: u32 = 0;
         while (attempts < 100) : (attempts += 1) {
-            // Generate random position within the range square
             const random = std.crypto.random;
             const offset_x = random.intRangeAtMost(i32, -range, range);
             const offset_y = random.intRangeAtMost(i32, -range, range);
@@ -77,7 +77,7 @@ pub const Robot = struct {
             }
         }
 
-        // Fallback: try systematic search if random failed
+        // Just search for first one if random doesnt work
         var y: i32 = -range;
         while (y <= range) : (y += 1) {
             var x: i32 = -range;
@@ -88,13 +88,12 @@ pub const Robot = struct {
                 const tile_type = tilemap.check_square(ftoi(test_x), ftoi(test_y));
 
                 if (tile_type == .NONE) {
-                    // FIX: Return relative offsets, not absolute coordinates
                     return comp.Position{ .x = itof(x), .y = itof(y) };
                 }
             }
         }
 
-        return null; // No valid position found
+        return null;
     }
 
     pub fn get_all() ![]*Robot {
@@ -173,13 +172,9 @@ pub const Robot = struct {
         return null;
     }
 
-    pub fn reset_turn(robot: *Robot) void {
-        robot.has_moved = false;
-    }
-
     pub fn move(robot: *Robot, dir: []const u8) void {
-        if (robot.has_moved) {
-            std.debug.print("Robot has already moved this turn!\n", .{});
+        // Wait 100 ticks before can move again
+        if (globals.TICK < robot.last_move_tick + 100) {
             return;
         }
 
@@ -192,7 +187,7 @@ pub const Robot = struct {
         if (std.mem.eql(u8, dir, "east"))
             robot.right();
 
-        robot.has_moved = true;
+        robot.last_move_tick = globals.TICK;
     }
 
     pub fn can_move(robot: *Robot, dir: []const u8) bool {

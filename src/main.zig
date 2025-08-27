@@ -6,8 +6,10 @@ const lua = @import("lua/lua.zig");
 const comp = @import("component.zig");
 const ecs = @import("ecs");
 const tilemap = @import("tilemap.zig");
+const globals = @import("globals.zig");
 const notify = @import("ui/notification.zig").notify;
 const ftoi = @import("utils.zig").ftoi;
+const Robot = @import("game/robot.zig").Robot;
 const renderer = @import("render.zig");
 const Player = @import("game/player.zig").Player;
 const print = std.debug.print;
@@ -58,10 +60,14 @@ pub fn main() anyerror!void {
 
         second_timer += dt;
 
-        if (second_timer >= 1) {
+        if (second_timer >= 0.01) {
+            globals.TICK += 1;
             try lua.lua_loop();
+            // Tick Robots
             second_timer = 0;
         }
+
+        std.debug.print("Tick: {}\n", .{globals.TICK});
 
         // Systems Here
 
