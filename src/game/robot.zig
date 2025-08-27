@@ -151,7 +151,8 @@ pub const Robot = struct {
         while (iter.next()) |e| {
             const r = reg.get(Robot, e);
             if (r.id != robot.id) continue;
-            const pos = reg.get(comp.Position, e);
+            const home = robot.get_home() orelse continue;
+            const pos = home.get_position() orelse continue;
             return comp.Position{
                 .x = pos.x + robot.relative_position.x,
                 .y = pos.y + robot.relative_position.y,

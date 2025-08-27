@@ -69,8 +69,6 @@ pub fn lua_robot_can_move(L: *Lua) callconv(.c) c_int {
         return 0;
     };
 
-    std.debug.print("Direction: {s}\n", .{direction});
-
     _ = L.getField(1, "id");
     const id = L.toInteger(-1) catch {
         std.debug.print("Could not get robot ID from table\n", .{});
@@ -78,8 +76,6 @@ pub fn lua_robot_can_move(L: *Lua) callconv(.c) c_int {
         return 0;
     };
     L.pop(1);
-
-    std.debug.print("ID: {}\n", .{id});
 
     const robot = Robot.get_id(@as(usize, @intCast(id))) orelse {
         L.pushBoolean(false);

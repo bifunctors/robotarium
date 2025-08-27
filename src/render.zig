@@ -57,20 +57,16 @@ fn render_mouse(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
     const tile_x = ftoi(world_mouse_pos.x / TILE_SIZE);
     const tile_y = ftoi(world_mouse_pos.y / TILE_SIZE);
 
-    // Check if the tile coordinates are within bounds
     const cols: i32 = TILEMAP_WIDTH;
     const rows: i32 = @intCast(map.items.len / TILEMAP_WIDTH);
 
     if (tile_x >= 0 and tile_x < cols and tile_y >= 0 and tile_y < rows) {
-        // Calculate pixel position of the tile
         const highlight_x = tile_x * TILE_SIZE;
         const highlight_y = tile_y * TILE_SIZE;
 
-        // Draw highlight overlay with semi-transparent color
         rl.drawRectangle(highlight_x, highlight_y, TILE_SIZE, TILE_SIZE, rl.Color{ .r = 255, .g = 255, .b = 0, .a = 100 } // Semi-transparent yellow
         );
 
-        // Optional: Draw border for better visibility
         rl.drawRectangleLines(highlight_x, highlight_y, TILE_SIZE, TILE_SIZE, rl.Color.yellow);
     }
 }

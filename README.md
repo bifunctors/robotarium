@@ -28,6 +28,9 @@ Programming game about little robots
 - [ ] Refactor if going Multiplayer route
 - [ ] Possibly Add A Robot Move Stack System ( Only can move one tile per tick )
 
+- [ ] Different Types of robots?
+- [ ] Robots have amounts of energy
+
 ### Lua Robot API Goals
 
 - move(dir), Moves 1 tile in any direction
@@ -45,3 +48,9 @@ Programming game about little robots
 - listen(channel), Receive messages on channel
 - getMessages(channel), Get all messages in channel or something
 - Maybe some sort of memory / storage
+
+## Gameplay
+
+- Robots can move within their homes' range
+- Robots can mine / harvest resources
+- Can use those resources to build waypoints and expand range
