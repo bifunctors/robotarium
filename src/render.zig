@@ -1,9 +1,16 @@
 const std = @import("std");
 const tilemap = @import("tilemap.zig");
-const Robot = @import("robot.zig").Robot;
+const Robot = @import("game/robot.zig").Robot;
 const Home = @import("game/home.zig").Home;
 const ftoi = @import("utils.zig").ftoi;
+const itof = @import("utils.zig").itof;
+const ftou = @import("utils.zig").ftou;
+const utof = @import("utils.zig").utof;
+const utoi = @import("utils.zig").utoi;
+const comp = @import("component.zig");
 const rl = @import("raylib");
+const main = @import("main.zig");
+const Notification = @import("ui/notification.zig").Notification;
 
 const Arraylist = std.ArrayList;
 const TileType = tilemap.TileType;
@@ -60,25 +67,44 @@ fn render_mouse(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
         const highlight_y = tile_y * TILE_SIZE;
 
         // Draw highlight overlay with semi-transparent color
-        rl.drawRectangle(
-            highlight_x,
-            highlight_y,
-            TILE_SIZE,
-            TILE_SIZE,
-            rl.Color{ .r = 255, .g = 255, .b = 0, .a = 100 } // Semi-transparent yellow
+        rl.drawRectangle(highlight_x, highlight_y, TILE_SIZE, TILE_SIZE, rl.Color{ .r = 255, .g = 255, .b = 0, .a = 100 } // Semi-transparent yellow
         );
 
         // Optional: Draw border for better visibility
-        rl.drawRectangleLines(
-            highlight_x,
-            highlight_y,
-            TILE_SIZE,
-            TILE_SIZE,
-            rl.Color.yellow
-        );
+        rl.drawRectangleLines(highlight_x, highlight_y, TILE_SIZE, TILE_SIZE, rl.Color.yellow);
     }
 }
 
+pub fn get_mouse_tile(camera: *rl.Camera2D) comp.Position {
+    const mouse_pos = rl.getMousePosition();
+    const world_mouse_pos = rl.getScreenToWorld2D(mouse_pos, camera.*);
+
+    const tile_x = ftoi(world_mouse_pos.x / TILE_SIZE);
+    const tile_y = ftoi(world_mouse_pos.y / TILE_SIZE);
+    return .{ .x = itof(tile_x), .y = itof(tile_y) };
+}
+
+pub fn get_mouse_tile_type(map: *const Arraylist(TileType), camera: *rl.Camera2D) ?TileType {
+    const mouse_pos = rl.getMousePosition();
+    const world_mouse_pos = rl.getScreenToWorld2D(mouse_pos, camera.*);
+
+    const tile_x = ftoi(world_mouse_pos.x / TILE_SIZE);
+    const tile_y = ftoi(world_mouse_pos.y / TILE_SIZE);
+
+    const cols: i32 = TILEMAP_WIDTH;
+    const rows: i32 = @intCast(map.items.len / TILEMAP_WIDTH);
+
+    if (tile_x >= 0 and tile_x < cols and tile_y >= 0 and tile_y < rows) {
+        // Calculate the index in the map array
+        const tile_index = @as(usize, @intCast(tile_y * cols + tile_x));
+
+        // Return the tile type at this position
+        return map.items[tile_index];
+    }
+
+    // Return null if mouse is outside the tilemap bounds
+    return null;
+}
 
 pub fn render_tilemap(map: *const Arraylist(TileType)) void {
     const cols: i32 = TILEMAP_WIDTH;
@@ -103,6 +129,31 @@ pub fn render_tilemap(map: *const Arraylist(TileType)) void {
     for (0..@as(usize, @intCast(rows + 1))) |r| {
         const y: i32 = @as(i32, @intCast(r)) * TILE_SIZE;
         rl.drawLine(0, y, cols * TILE_SIZE, y, rl.Color.black);
+    }
+}
+
+pub fn render_notifications(dt: f32) void {
+    const notif_width = main.WIDTH / 6;
+    const x = main.WIDTH - (notif_width) - 25;
+    for (Notification.Notifications.items, 0..) |*notif, i| {
+        if (notif.timer >= notif.duration) {
+            _ = Notification.Notifications.orderedRemove(i);
+            break;
+        }
+        notif.timer += dt;
+
+        const rec = rl.Rectangle{
+            .x = x,
+            .y = utof(25 + (55 * i)),
+            .width = notif_width,
+            .height = 40,
+        };
+
+        rl.drawRectangleRounded(rec, 3, 10, .pink);
+        rl.drawRectangleRoundedLinesEx(rec, 3, 10, 2, .white);
+        var buf: [100]u8 = undefined;
+        const msg = std.fmt.bufPrintZ(&buf, "{s}", .{ notif.msg }) catch "";
+        rl.drawText(msg, x + 20, utoi(35 + (55 * i)), 25, .black);
     }
 }
 

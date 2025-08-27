@@ -1,11 +1,11 @@
 const std = @import("std");
 const ecs = @import("ecs");
-const comp = @import("component.zig");
-const tilemap = @import("tilemap.zig");
-const ftoi = @import("utils.zig").ftoi;
-const itof = @import("utils.zig").itof;
-const utof = @import("utils.zig").utof;
-const Home = @import("game/home.zig").Home;
+const comp = @import("../component.zig");
+const tilemap = @import("../tilemap.zig");
+const ftoi = @import("../utils.zig").ftoi;
+const itof = @import("../utils.zig").itof;
+const utof = @import("../utils.zig").utof;
+const Home = @import("home.zig").Home;
 const ArrayList = std.ArrayList;
 
 pub const Robot = struct {

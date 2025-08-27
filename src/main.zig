@@ -1,10 +1,13 @@
 const std = @import("std");
 const scan = @import("scan");
 const rl = @import("raylib");
-const lua = @import("lua.zig");
+const rlgui = @import("raygui");
+const lua = @import("lua/lua.zig");
 const comp = @import("component.zig");
 const ecs = @import("ecs");
 const tilemap = @import("tilemap.zig");
+const notify = @import("ui/notification.zig").notify;
+const ftoi = @import("utils.zig").ftoi;
 const renderer = @import("render.zig");
 const Player = @import("game/player.zig").Player;
 const print = std.debug.print;
@@ -22,13 +25,15 @@ var camera = rl.Camera2D{
     .zoom = 0.5,
 };
 
+var map = std.ArrayList(tilemap.TileType){};
+
 pub fn main() anyerror!void {
     init_raylib();
     defer rl.closeWindow();
 
     comp.init_registry(ecs.Registry.init(std.heap.page_allocator));
 
-    const map = try tilemap.generate_map();
+    map = try tilemap.generate_map();
 
     const home_id = try Player.init("Bilbo Baggings");
 
@@ -52,7 +57,9 @@ pub fn main() anyerror!void {
             second_timer = 0;
         }
 
-        input();
+        try input();
+
+        std.debug.print("", .{});
 
         rl.beginDrawing();
         defer rl.endDrawing();
@@ -64,11 +71,13 @@ pub fn main() anyerror!void {
 
         rl.endMode2D();
 
+        renderer.render_notifications(dt);
+
         rl.drawFPS(20, 20);
     }
 }
 
-fn input() void {
+fn input() !void {
     if (rl.isKeyPressed(.q))
         std.process.exit(0);
 
@@ -95,6 +104,20 @@ fn input() void {
         camera.target.y += 2;
     if (rl.isKeyDown(.j))
         camera.target.y += 2;
+
+    if (rl.isMouseButtonPressed(.left)) {
+        const tile_type = renderer.get_mouse_tile_type(&map, &camera);
+        const mouse_tile = renderer.get_mouse_tile(&camera);
+        const square = tilemap.check_square(ftoi(mouse_tile.x), ftoi(mouse_tile.y));
+
+        const noficiation_msg = try std.fmt.allocPrint(
+            std.heap.page_allocator,
+            "{s} : {s}",
+            .{ tile_type.?.to_string(), square.to_string() },
+        );
+
+        try notify(noficiation_msg);
+    }
 
     if (rl.isMouseButtonDown(.middle)) {
         var delta = rl.getMouseDelta();

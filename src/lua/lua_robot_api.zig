@@ -1,8 +1,8 @@
 const std = @import("std");
 const ecs = @import("ecs");
 const zlua = @import("zlua");
-const comp = @import("component.zig");
-const Robot = @import("robot.zig").Robot;
+const comp = @import("../component.zig");
+const Robot = @import("../game/robot.zig").Robot;
 const Lua = zlua.Lua;
 
 pub fn lua_robot_forward(L: *Lua) callconv(.c) c_int {

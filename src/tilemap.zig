@@ -5,7 +5,7 @@ const comp = @import("component.zig");
 const itof = @import("utils.zig").itof;
 const ftou = @import("utils.zig").ftou;
 const Home = @import("game/home.zig").Home;
-const Robot = @import("robot.zig").Robot;
+const Robot = @import("game/robot.zig").Robot;
 
 const Arraylist = std.ArrayList;
 
@@ -16,12 +16,28 @@ pub const EntityType = union(enum) {
     HOME: *Home,
     ROBOT: *Robot,
     NONE,
+
+    pub fn to_string(this: *const EntityType) []const u8 {
+        return switch(this.*) {
+            .HOME => "HOME",
+            .ROBOT => "ROBOT",
+            .NONE => "NONE",
+        };
+    }
 };
 
 pub const TileType = union(enum) {
     GRASS: u8,
     ROCK,
     MUD,
+
+    pub fn to_string(this: *const TileType) []const u8 {
+        return switch(this.*) {
+            .GRASS => "GRASS",
+            .ROCK => "ROCK",
+            .MUD => "MUD",
+        };
+    }
 };
 
 pub var MAP = Arraylist(TileType){};

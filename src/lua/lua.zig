@@ -1,10 +1,10 @@
 const std = @import("std");
 const zlua = @import("zlua");
-const Robot = @import("robot.zig").Robot;
+const Robot = @import("../game/robot.zig").Robot;
 const ecs = @import("ecs");
 const robot_api = @import("lua_robot_api.zig");
-const tilemap = @import("tilemap.zig");
-const comp = @import("component.zig");
+const tilemap = @import("../tilemap.zig");
+const comp = @import("../component.zig");
 const Lua = zlua.Lua;
 
 var lua_state: *Lua = undefined;
@@ -15,6 +15,7 @@ pub fn init_lua(home_id: usize) !void {
     lua_state = try Lua.init(std.heap.page_allocator);
     lua_state.openLibs();
     register_lua_functions(lua_state);
+    std.debug.print("Initiating Lua\n", .{});
 }
 
 pub fn deinit_lua() !void {
@@ -22,7 +23,9 @@ pub fn deinit_lua() !void {
 }
 
 pub fn lua_main() !void {
-    try lua_state.doFile("lua/main.lua");
+    std.debug.print("Doing File\n", .{});
+    try lua_state.doFile("../lua/main.lua");
+    std.debug.print("Done File\n", .{});
 }
 
 pub fn lua_loop() !void {

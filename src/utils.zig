@@ -13,3 +13,7 @@ pub fn utof(x: usize) f32 {
 pub fn itof(x: i32) f32 {
     return @as(f32, @floatFromInt(x));
 }
+
+pub fn utoi(x: usize) i32 {
+    return @as(i32, @intCast(x));
+}
