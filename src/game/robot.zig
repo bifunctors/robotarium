@@ -55,8 +55,8 @@ pub const Robot = struct {
         std.heap.page_allocator.free(robot.name);
     }
 
-    fn find_valid_spawn_position(home: *Home, home_pos: *comp.Position) ?comp.Position {
-        const range = @as(i32, @intCast(home.range - 1));
+    fn find_valid_spawn_position(_: *Home, home_pos: *comp.Position) ?comp.Position {
+        const range = 8;
 
         // Try up to 100 random positions within range
         var attempts: u32 = 0;

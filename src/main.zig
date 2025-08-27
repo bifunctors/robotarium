@@ -31,12 +31,17 @@ pub fn main() anyerror!void {
     init_raylib();
     defer rl.closeWindow();
 
+    // Entity Component System
     comp.init_registry(ecs.Registry.init(std.heap.page_allocator));
 
+    // Generates a random map, this will be procedurally generated in future
+    // Probably should use some sort of noise function in the future aswell
     map = try tilemap.generate_map();
 
+    // Creating a player generates them a home automatically
     const home_id = try Player.init("Bilbo Baggings");
 
+    // Creates lua state
     try lua.init_lua(home_id);
     defer lua.deinit_lua() catch unreachable;
 
@@ -47,6 +52,7 @@ pub fn main() anyerror!void {
 
     while (!rl.windowShouldClose()) {
         const current_time = rl.getTime();
+        // delta time
         const dt: f32 = @as(f32, @floatCast(current_time - last_frame_time)) * 1;
         last_frame_time = current_time;
 
@@ -57,19 +63,21 @@ pub fn main() anyerror!void {
             second_timer = 0;
         }
 
-        try input();
+        // Systems Here
 
-        std.debug.print("", .{});
+        // For now just mouse input
+        try input_system();
 
         rl.beginDrawing();
         defer rl.endDrawing();
         rl.clearBackground(.white);
 
-        rl.beginMode2D(camera);
+        {
+            rl.beginMode2D(camera);
+            defer rl.endMode2D();
 
-        renderer.render(&map, &camera);
-
-        rl.endMode2D();
+            renderer.render(&map, &camera);
+        }
 
         renderer.render_notifications(dt);
 
@@ -77,7 +85,7 @@ pub fn main() anyerror!void {
     }
 }
 
-fn input() !void {
+fn input_system() !void {
     if (rl.isKeyPressed(.q))
         std.process.exit(0);
 
