@@ -24,7 +24,7 @@ pub fn deinit_lua() !void {
 
 pub fn lua_main() !void {
     std.debug.print("Doing File\n", .{});
-    try lua_state.doFile("../lua/main.lua");
+    try lua_state.doFile("lua/main.lua");
     std.debug.print("Done File\n", .{});
 }
 
