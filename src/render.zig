@@ -129,8 +129,7 @@ pub fn render_tilemap(map: *const Arraylist(TileType)) void {
 }
 
 pub fn render_notifications(dt: f32) void {
-    const notif_width = main.WIDTH / 6;
-    const x = main.WIDTH - (notif_width) - 25;
+    const notif_width = 30;
     for (Notification.Notifications.items, 0..) |*notif, i| {
         if (notif.timer >= notif.duration) {
             _ = Notification.Notifications.orderedRemove(i);
@@ -138,17 +137,21 @@ pub fn render_notifications(dt: f32) void {
         }
         notif.timer += dt;
 
+        var buf: [100]u8 = undefined;
+        const msg = std.fmt.bufPrintZ(&buf, "{s}", .{ notif.msg }) catch "";
+
+        const text_width = rl.measureText(msg, 25);
+        const x = main.WIDTH - text_width - (notif_width / 2) - 25;
+
         const rec = rl.Rectangle{
-            .x = x,
+            .x = itof(x),
             .y = utof(25 + (55 * i)),
-            .width = notif_width,
+            .width = itof(text_width + notif_width),
             .height = 40,
         };
 
         rl.drawRectangleRounded(rec, 3, 10, .pink);
         rl.drawRectangleRoundedLinesEx(rec, 3, 10, 2, .white);
-        var buf: [100]u8 = undefined;
-        const msg = std.fmt.bufPrintZ(&buf, "{s}", .{ notif.msg }) catch "";
         rl.drawText(msg, x + 20, utoi(35 + (55 * i)), 25, .black);
     }
 }

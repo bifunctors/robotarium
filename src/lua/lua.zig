@@ -5,6 +5,7 @@ const ecs = @import("ecs");
 const robot_api = @import("lua_robot_api.zig");
 const tilemap = @import("../tilemap.zig");
 const comp = @import("../component.zig");
+const notify = @import("../ui/notification.zig").notify;
 const Lua = zlua.Lua;
 
 var lua_state: *Lua = undefined;
@@ -109,6 +110,12 @@ fn lua_print(L: *Lua) callconv(.c) c_int {
     return 0;
 }
 
+fn lua_notify(L: *Lua) callconv(.c) c_int {
+    const msg = L.toString(1) catch return 1;
+    notify(msg) catch std.debug.print("Could Not Notify Message: {s}\n", .{msg});
+    return 0;
+}
+
 fn register_lua_functions(L: *Lua) void {
     L.newTable();
 
@@ -117,6 +124,9 @@ fn register_lua_functions(L: *Lua) void {
 
     L.pushFunction(zlua.wrap(lua_print));
     L.setField(-2, "console");
+
+    L.pushFunction(zlua.wrap(lua_notify));
+    L.setField(-2, "notify");
 
     L.setGlobal("Game");
 }
