@@ -4,6 +4,7 @@ const comp = @import("../component.zig");
 const tilemap = @import("../map/tilemap.zig");
 const Tile = @import("../map/tile.zig").Tile;
 const log = @import("log");
+const Direction = @import("../utils/direction.zig").Direction;
 const globals = @import("../globals.zig");
 const ftoi = @import("../utils/utils.zig").ftoi;
 const itof = @import("../utils/utils.zig").itof;
@@ -16,6 +17,7 @@ pub const Robot = struct {
     name: []const u8,
     home_id: usize,
     last_move_tick: u64 = 0,
+    cooldown_ticks: usize = 100,
 
     var next_robot_id: usize = 1;
 
@@ -177,59 +179,55 @@ pub const Robot = struct {
         return null;
     }
 
-    pub fn move(robot: *Robot, dir: []const u8) void {
+    pub fn move_cooldown(robot: *Robot) bool {
+        return globals.TICK >= robot.last_move_tick + robot.cooldown_ticks;
+    }
+
+    pub fn move(robot: *Robot, dir: Direction) void {
         // Wait 100 ticks before can move again
         if (globals.TICK < robot.last_move_tick + 100) {
             return;
         }
 
-        if (std.mem.eql(u8, dir, "north"))
-            if (robot.can_move("north"))
-                robot.forward();
-        if (std.mem.eql(u8, dir, "south"))
-            if (robot.can_move("south"))
-                robot.backward();
-        if (std.mem.eql(u8, dir, "west"))
-            if (robot.can_move("west"))
-                robot.left();
-        if (std.mem.eql(u8, dir, "east"))
-            if (robot.can_move("east"))
-                robot.right();
+        if(!robot.can_move(dir)) return;
+
+        switch (dir) {
+            .forward => robot.forward(),
+            .backward => robot.backward(),
+            .left => robot.left(),
+            .right => robot.right()
+        }
 
         robot.last_move_tick = globals.TICK;
     }
 
-    pub fn can_move(robot: *Robot, dir: []const u8) bool {
-        if (std.mem.eql(u8, dir, "north"))
-            return check_movable_tile(robot, 0, -1);
-        if (std.mem.eql(u8, dir, "south"))
-            return check_movable_tile(robot, 0, 1);
-        if (std.mem.eql(u8, dir, "west"))
-            return check_movable_tile(robot, -1, 0);
-        if (std.mem.eql(u8, dir, "east"))
-            return check_movable_tile(robot, 1, 0);
-
-        return false;
+    pub fn can_move(robot: *Robot, dir: Direction) bool {
+        const relative_dir = dir.get_relative_pos();
+        return robot.check_movable_tile(relative_dir.x, relative_dir.y);
     }
 
     pub fn forward(robot: *Robot) void {
-        if (!check_movable_tile(robot, 0, -1)) return;
+        if(!robot.can_move(.forward)) return;
         robot.get_position().?.y -= 1;
     }
 
     pub fn backward(robot: *Robot) void {
-        if (!check_movable_tile(robot, 0, 1)) return;
+        if(!robot.can_move(.backward)) return;
         robot.get_position().?.y += 1;
     }
 
     pub fn left(robot: *Robot) void {
-        if (!check_movable_tile(robot, -1, 0)) return;
+        if(!robot.can_move(.left)) return;
         robot.get_position().?.x -= 1;
     }
 
     pub fn right(robot: *Robot) void {
-        if (!check_movable_tile(robot, 1, 0)) return;
+        if(!robot.can_move(.right)) return;
         robot.get_position().?.x += 1;
+    }
+
+    pub fn can_harvest(_: *Robot, _: []const u8) void {
+        return;
     }
 
     pub fn check_movable_tile(robot: *Robot, x_offset: f32, y_offset: f32) bool {

@@ -7,6 +7,7 @@ const tilemap = @import("../map/tilemap.zig");
 const file_contents = @import("lua_files.zig");
 const comp = @import("../component.zig");
 const log = @import("log");
+const globals = @import("../globals.zig");
 const notify = @import("../ui/notification.zig").notify;
 const kf = @import("kfolders");
 const Lua = zlua.Lua;
@@ -16,14 +17,14 @@ var current_home_id: usize = 0;
 
 const LuaErrors = error{NoUpdateFunction};
 
-pub fn init_lua(home_id: usize) !void {
+pub fn init(home_id: usize) !void {
     current_home_id = home_id;
     lua_state = try Lua.init(std.heap.page_allocator);
     lua_state.openLibs();
     register_lua_functions(lua_state);
 }
 
-pub fn deinit_lua() !void {
+pub fn deinit() !void {
     lua_state.deinit();
 }
 
@@ -107,12 +108,29 @@ fn create_lua_api_files() !void {
     const game_api_file = try std.fs.createFileAbsolute(game_api_lua, .{});
     defer game_api_file.close();
     try game_api_file.writeAll(file_contents.GAME_API_LUA_FILE);
+
     const globals_api_file = try std.fs.createFileAbsolute(globals_api_lua, .{});
     defer globals_api_file.close();
     try globals_api_file.writeAll(file_contents.GLOBALS_API_LUA_FILE);
+
     const robot_api_file = try std.fs.createFileAbsolute(robot_api_lua, .{});
     defer robot_api_file.close();
     try robot_api_file.writeAll(file_contents.ROBOT_API_LUA_FILE);
+}
+
+pub fn lua_init() !void {
+    create_robots_table();
+    _ = lua_state.getGlobal("Init") catch {
+        return;
+    };
+
+    if(lua_state.isFunction(-1)) {
+        lua_state.call(.{ .args = 0, .results = 0 });
+    } else {
+        log.err("Init is not a function", .{});
+        lua_state.pop(1);
+    }
+
 }
 
 pub fn lua_loop() !void {
@@ -163,6 +181,9 @@ fn create_robots_table() void {
         lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_move));
         lua_state.setField(-2, "canMove");
 
+        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_move_cooldown));
+        lua_state.setField(-2, "moveCooldown");
+
         lua_state.rawSetIndex(-2, idx);
         idx += 1;
     }
@@ -192,6 +213,12 @@ fn lua_print(L: *Lua) callconv(.c) c_int {
     return 0;
 }
 
+fn lua_get_tick(L: *Lua) callconv(.c) c_int {
+    const tick = globals.TICK;
+    L.pushInteger(@intCast(tick));
+    return 1;
+}
+
 fn lua_notify(L: *Lua) callconv(.c) c_int {
     const msg = L.toString(1) catch return 1;
     notify(msg) catch log.err("Could Not Notify Message: {s}", .{msg});
@@ -205,7 +232,10 @@ fn register_lua_functions(L: *Lua) void {
     L.setField(-2, "createRobot");
 
     L.pushFunction(zlua.wrap(lua_print));
-    L.setField(-2, "console");
+    L.setField(-2, "print");
+
+    L.pushFunction(zlua.wrap(lua_get_tick));
+    L.setField(-2, "getTick");
 
     L.pushFunction(zlua.wrap(lua_notify));
     L.setField(-2, "notify");

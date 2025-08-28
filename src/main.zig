@@ -45,13 +45,15 @@ pub fn main() anyerror!void {
     const home_id = try Player.init("Clark Kent");
 
     // Creates lua state
-    try lua.init_lua(home_id);
-    defer lua.deinit_lua() catch unreachable;
+    try lua.init(home_id);
+    defer lua.deinit() catch unreachable;
 
-    lua.lua_main() catch {
-        log.err("Could Not Run main.lua", .{});
+    lua.lua_main() catch |e| {
+        log.err("Could Not Run main.lua: {}", .{e});
         return;
     };
+
+    try lua.lua_init();
 
     var last_frame_time = rl.getTime();
     var tick_timer: f32 = 0;

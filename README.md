@@ -10,11 +10,15 @@ Programming game about little robots
 - [x] Add Proper Logging
 - [x] Add Robot Names Above Their Head
 - [x] Add Home Names Above Their Head
+- [ ] Add more generated buildings
+- [ ] Save world generations
+- [ ] Only render part of the map player is looking at
 - [ ] Expand Robot Lua API ( See Below )
 - [ ] Look Into Servers
 - [ ] Refactor if going Multiplayer route
 - [ ] Possibly Add A Robot Move Stack System ( Only can move one tile per tick )
-- [ ] Different Types of robots?
+- [ ] Add actual textures for things
+- [ ] Different Robot Types
 - [ ] Robots have amounts of energy
 - [ ] Add a standard for what is on a tile
 
@@ -22,6 +26,7 @@ Programming game about little robots
 
 - [x] move(dir), Moves 1 tile in any direction
 - [x] canMove(dir), Returns true if robot can move in the direction
+- [x] moveCooldown(), Returns true if robot can actually move this tick
 - [ ] scan(), Scans Tile Underneath Robot
 - [ ] scan(dir), Scans Tile in direction of robot
 - [ ] inventory(), Returns table of personal inventory of robot

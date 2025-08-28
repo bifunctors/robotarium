@@ -36,6 +36,22 @@ fn render_robots() void {
         const pos = robot.get_position() orelse continue;
         const size = robot.get_size() orelse continue;
 
+        // Calculate cooldown progress (0.0 = just moved, 1.0 = ready to move)
+        const ticks_since_move = globals.TICK - robot.last_move_tick;
+        const cooldown_progress = @min(@as(f32, @floatFromInt(ticks_since_move)) / @as(f32, @floatFromInt(robot.cooldown_ticks)), 1.0);
+
+        // Interpolate from red (255,0,0) to orange (255,165,0)
+        const red: u8 = 255; // Always full red
+        const green: u8 = @as(u8, @intFromFloat(cooldown_progress * 165.0)); // 0 -> 165
+        const blue: u8 = 0; // Always 0
+
+        const colour = rl.Color{
+            .r = red,
+            .g = green,
+            .b = blue,
+            .a = 255,
+        };
+
         const tile_x = ord_to_tile(pos.x);
         const tile_y = ord_to_tile(pos.y);
         rl.drawRectangle(
@@ -43,7 +59,7 @@ fn render_robots() void {
             tile_y + (padding / 2),
             (TILE_SIZE * ftoi(size.x)) - padding,
             (TILE_SIZE * ftoi(size.y)) - padding,
-            .orange,
+            colour,
         );
 
         // Format name

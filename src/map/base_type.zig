@@ -12,4 +12,10 @@ pub const BaseType = union(enum) {
             .CONCRETE => "CONCRETE",
         };
     }
+
+    pub fn is_mineable(base: *BaseType) bool {
+        return switch (base) {
+            else => false
+        };
+    }
 };
