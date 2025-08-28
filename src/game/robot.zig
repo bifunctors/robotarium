@@ -29,15 +29,12 @@ pub const Robot = struct {
 
         const home = Home.get_id(home_id) orelse return;
         const pos = home.get_position() orelse return;
-        std.debug.print("Home Position Is: {}\n", .{pos});
         // const size = home.get_size() orelse return;
 
         const relative_position = find_valid_spawn_position(home, pos) orelse {
             std.debug.print("Could not find valid spawn position for robot!\n", .{});
             return;
         };
-
-        std.debug.print("Suitable Relative Position At: {}\n", .{relative_position});
 
         const r = Robot{
             .name = name_copy,

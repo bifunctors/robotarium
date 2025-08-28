@@ -28,9 +28,17 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const known_folders_dep = b.dependency("known_folders", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    // This adds the known-folders module to the executable which can then be imported with `@import("known-folders")`
+
     const raylib = raylib_dep.module("raylib"); // main raylib module
     const raygui = raylib_dep.module("raygui"); // raygui module
     const raylib_artifact = raylib_dep.artifact("raylib"); // raylib C library
+    const known_folders = known_folders_dep.module("known-folders");
     const ecs = ecs_dep.module("zig-ecs");
 
     exe.linkLibrary(raylib_artifact);
@@ -38,9 +46,9 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("ecs", ecs);
     exe.root_module.addImport("zlua", lua_dep.module("zlua"));
     exe.root_module.addImport("raygui", raygui);
+    exe.root_module.addImport("kfolders", known_folders);
 
     b.installArtifact(exe);
-
 
     const run_step = b.step("run", "Run the app");
 

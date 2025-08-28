@@ -29,7 +29,7 @@ Programming game about little robots
 - [ ] Possibly Add A Robot Move Stack System ( Only can move one tile per tick )
 - [ ] Different Types of robots?
 - [ ] Robots have amounts of energy
-
+- [ ] Move Lua Files to Config Directory
 - [x] Global Tick Count
 
 ### Lua Robot API Goals

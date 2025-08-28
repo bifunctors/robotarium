@@ -47,7 +47,9 @@ pub fn main() anyerror!void {
     try lua.init_lua(home_id);
     defer lua.deinit_lua() catch unreachable;
 
-    try lua.lua_main();
+    lua.lua_main() catch {
+        return;
+    };
 
     var last_frame_time = rl.getTime();
     var second_timer: f32 = 0;
@@ -63,11 +65,8 @@ pub fn main() anyerror!void {
         if (second_timer >= 0.01) {
             globals.TICK += 1;
             try lua.lua_loop();
-            // Tick Robots
             second_timer = 0;
         }
-
-        std.debug.print("Tick: {}\n", .{globals.TICK});
 
         // Systems Here
 
