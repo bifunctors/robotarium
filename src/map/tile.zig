@@ -4,7 +4,7 @@ const rl = @import("raylib");
 const Home = @import("../game/home.zig").Home;
 const Robot = @import("../game/robot.zig").Robot;
 const BaseType = @import("base_type.zig").BaseType;
-const EntityType = @import("entity_type.zig").Entity;
+const Entity = @import("entity_type.zig").Entity;
 const ftoi = @import("../utils/utils.zig").ftoi;
 const ftou = @import("../utils/utils.zig").ftou;
 const itou = @import("../utils/utils.zig").itou;
@@ -56,18 +56,6 @@ pub const Tile = struct {
     }
 
     pub fn has_entity(pos: *const comp.Position) bool {
-        var reg = comp.get_registry();
-        var view = reg.view(.{ Robot, comp.Position }, .{});
-
-        var iter = view.entityIterator();
-        while(iter.next()) |e| {
-            const robot_pos = view.get(comp.Position, e);
-            if(robot_pos.x == pos.x and robot_pos.y == pos.y) {
-                return true;
-            }
-        }
-
-        return false;
-
+        return (Entity.get_tilef(pos.x, pos.y) != .NONE);
     }
 };

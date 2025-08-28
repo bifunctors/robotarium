@@ -30,16 +30,21 @@ pub fn render(camera: *rl.Camera2D) void {
 
 fn render_robots() void {
     const robots = Robot.get_all() catch return;
+    const padding = 10;
 
     for (robots) |robot| {
         const pos = robot.get_position() orelse continue;
         const size = robot.get_size() orelse continue;
 
-        const padding = 10;
-
         const tile_x = ord_to_tile(pos.x);
         const tile_y = ord_to_tile(pos.y);
-        rl.drawRectangle(tile_x + (padding / 2), tile_y + (padding / 2), TILE_SIZE - padding, TILE_SIZE - padding, .orange);
+        rl.drawRectangle(
+            tile_x + (padding / 2),
+            tile_y + (padding / 2),
+            (TILE_SIZE * ftoi(size.x)) - padding,
+            (TILE_SIZE * ftoi(size.y)) - padding,
+            .orange,
+        );
 
         // Format name
         var buf: [100]u8 = undefined;
@@ -52,16 +57,20 @@ fn render_robots() void {
 fn render_homes() void {
     const homes = Home.get_all() catch return;
 
+    const padding = 10;
+
     for (homes) |home| {
         const pos = home.get_position() orelse continue;
         const size = home.get_size() orelse continue;
 
+        const tile_x = ord_to_tile(pos.x);
+        const tile_y = ord_to_tile(pos.y);
 
         rl.drawRectangle(
-            toi(pos.x) * TILE_SIZE,
-            toi(pos.y) * TILE_SIZE,
-            TILE_SIZE * ftoi(size.x),
-            TILE_SIZE * ftoi(size.y),
+            tile_x + (padding / 2),
+            tile_y + (padding / 2),
+            (TILE_SIZE * ftoi(size.x)) - padding,
+            (TILE_SIZE * ftoi(size.y)) - padding,
             .purple,
         );
 
@@ -71,7 +80,6 @@ fn render_homes() void {
         const name = std.fmt.bufPrintZ(&buf, "{s}'s Home", .{player.name}) catch "";
 
         render_nametag(name, pos.*, size.*);
-
     }
 }
 

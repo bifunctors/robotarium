@@ -28,7 +28,7 @@ pub const Home = struct {
             .level = 1,
         });
 
-        const size = comp.Size{ .x = 2, .y = 2 };
+        const size = comp.Size{ .x = 2, .y = 6 };
         const spawning_loc = tilemap.get_spawning_square();
 
         reg.add(entity, spawning_loc);

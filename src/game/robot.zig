@@ -32,7 +32,7 @@ pub const Robot = struct {
         const home_pos = home.get_position() orelse return;
 
         const robot_pos = find_valid_spawn_position(home, home_pos) orelse {
-            log.err("Could Not Find a valid position for robot at: {}", .{ home.id });
+            log.err("Could Not Find a valid position for robot at: {}", .{home.id});
             return;
         };
 
@@ -61,15 +61,11 @@ pub const Robot = struct {
             const offset_x = random.intRangeAtMost(i32, -range, range);
             const offset_y = random.intRangeAtMost(i32, -range, range);
 
-            var test_position = comp.Position{
-                .x = home_pos.x + @as(f32, @floatFromInt(offset_x)),
-                .y = home_pos.y + @as(f32, @floatFromInt(offset_y))
-            };
+            var test_position = comp.Position{ .x = home_pos.x + @as(f32, @floatFromInt(offset_x)), .y = home_pos.y + @as(f32, @floatFromInt(offset_y)) };
 
-            if(!Tile.has_entity(&test_position)) {
+            if (!Tile.has_entity(&test_position)) {
                 return test_position;
             }
-
         }
 
         // Just search for first one if random doesnt work
@@ -82,7 +78,7 @@ pub const Robot = struct {
                     .y = home_pos.y + @as(f32, @floatFromInt(y)),
                 };
 
-                if(!Tile.has_entity(&test_postion)) {
+                if (!Tile.has_entity(&test_postion)) {
                     return test_postion;
                 }
             }
@@ -137,25 +133,24 @@ pub const Robot = struct {
         var reg = comp.get_registry();
         var view = reg.view(.{ Robot, comp.Position }, .{});
         var iter = view.entityIterator();
-        while(iter.next()) |e| {
+        while (iter.next()) |e| {
             const entity_robot = view.get(Robot, e);
             const pos = view.get(comp.Position, e);
-            if(entity_robot.id == robot.id) {
+            if (entity_robot.id == robot.id) {
                 return pos;
             }
         }
         return null;
     }
 
-
     pub fn get_size(robot: *Robot) ?*comp.Size {
         var reg = comp.get_registry();
         var view = reg.view(.{ Robot, comp.Size }, .{});
         var iter = view.entityIterator();
-        while(iter.next()) |e| {
+        while (iter.next()) |e| {
             const entity_robot = view.get(Robot, e);
             const size = view.get(comp.Size, e);
-            if(entity_robot.id == robot.id) {
+            if (entity_robot.id == robot.id) {
                 return size;
             }
         }
@@ -189,13 +184,17 @@ pub const Robot = struct {
         }
 
         if (std.mem.eql(u8, dir, "north"))
-            robot.forward();
+            if (robot.can_move("north"))
+                robot.forward();
         if (std.mem.eql(u8, dir, "south"))
-            robot.backward();
+            if (robot.can_move("south"))
+                robot.backward();
         if (std.mem.eql(u8, dir, "west"))
-            robot.left();
+            if (robot.can_move("west"))
+                robot.left();
         if (std.mem.eql(u8, dir, "east"))
-            robot.right();
+            if (robot.can_move("east"))
+                robot.right();
 
         robot.last_move_tick = globals.TICK;
     }
