@@ -42,7 +42,7 @@ pub fn main() anyerror!void {
     globals.MAP = try tilemap.generate_map();
 
     // Creating a player generates them a home automatically
-    const home_id = try Player.init("Bilbo Baggings");
+    const home_id = try Player.init("Clark Kent");
 
     // Creates lua state
     try lua.init_lua(home_id);

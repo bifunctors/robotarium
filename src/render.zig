@@ -35,16 +35,17 @@ fn render_robots() void {
         const pos = robot.get_position() orelse continue;
         const size = robot.get_size() orelse continue;
 
+        const padding = 10;
+
         const tile_x = ord_to_tile(pos.x);
         const tile_y = ord_to_tile(pos.y);
-        rl.drawRectangle(tile_x, tile_y, 50, 50, .orange);
+        rl.drawRectangle(tile_x + (padding / 2), tile_y + (padding / 2), TILE_SIZE - padding, TILE_SIZE - padding, .orange);
 
         // Format name
         var buf: [100]u8 = undefined;
         const name = std.fmt.bufPrintZ(&buf, "{s}", .{robot.name}) catch "";
 
         render_nametag(name, pos.*, size.*);
-
     }
 }
 
@@ -65,7 +66,11 @@ fn render_homes() void {
         );
 
         const player = home.get_player() orelse continue;
-        render_nametag(player.name, pos.*, size.*);
+
+        var buf: [100]u8 = undefined;
+        const name = std.fmt.bufPrintZ(&buf, "{s}'s Home", .{player.name}) catch "";
+
+        render_nametag(name, pos.*, size.*);
 
     }
 }
