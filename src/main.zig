@@ -8,8 +8,9 @@ const ecs = @import("ecs");
 const tilemap = @import("tilemap.zig");
 const globals = @import("globals.zig");
 const notify = @import("ui/notification.zig").notify;
-const ftoi = @import("utils.zig").ftoi;
+const ftoi = @import("utils/utils.zig").ftoi;
 const Robot = @import("game/robot.zig").Robot;
+const log = @import("log");
 const renderer = @import("render.zig");
 const Player = @import("game/player.zig").Player;
 const print = std.debug.print;
@@ -48,11 +49,13 @@ pub fn main() anyerror!void {
     defer lua.deinit_lua() catch unreachable;
 
     lua.lua_main() catch {
+        log.err("Could Not Run main.lua", .{});
         return;
     };
 
     var last_frame_time = rl.getTime();
-    var second_timer: f32 = 0;
+    var tick_timer: f32 = 0;
+    var previus_tick: u64 = 0;
 
     while (!rl.windowShouldClose()) {
         const current_time = rl.getTime();
@@ -60,17 +63,20 @@ pub fn main() anyerror!void {
         const dt: f32 = @as(f32, @floatCast(current_time - last_frame_time)) * 1;
         last_frame_time = current_time;
 
-        second_timer += dt;
+        tick_timer += dt;
 
-        if (second_timer >= 0.01) {
+        if (tick_timer >= globals.TIME_PER_TICK) {
+            previus_tick = globals.TICK;
             globals.TICK += 1;
+            tick_timer = 0;
+        }
+
+        // Run every tick
+        if(previus_tick > globals.TICK) {
             try lua.lua_loop();
-            second_timer = 0;
         }
 
         // Systems Here
-
-        // For now just mouse input
         try input_system();
 
         rl.beginDrawing();

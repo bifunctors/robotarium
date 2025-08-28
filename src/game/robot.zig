@@ -2,10 +2,11 @@ const std = @import("std");
 const ecs = @import("ecs");
 const comp = @import("../component.zig");
 const tilemap = @import("../tilemap.zig");
+const log = @import("log");
 const globals = @import("../globals.zig");
-const ftoi = @import("../utils.zig").ftoi;
-const itof = @import("../utils.zig").itof;
-const utof = @import("../utils.zig").utof;
+const ftoi = @import("../utils/utils.zig").ftoi;
+const itof = @import("../utils/utils.zig").itof;
+const utof = @import("../utils/utils.zig").utof;
 const Home = @import("home.zig").Home;
 const ArrayList = std.ArrayList;
 
@@ -32,7 +33,7 @@ pub const Robot = struct {
         // const size = home.get_size() orelse return;
 
         const relative_position = find_valid_spawn_position(home, pos) orelse {
-            std.debug.print("Could not find valid spawn position for robot!\n", .{});
+            log.err("Could Not Find a valid position for robot at: {}", .{ home.id });
             return;
         };
 

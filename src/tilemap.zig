@@ -2,8 +2,8 @@ const std = @import("std");
 const rl = @import("raylib");
 const ecs = @import("ecs");
 const comp = @import("component.zig");
-const itof = @import("utils.zig").itof;
-const ftou = @import("utils.zig").ftou;
+const itof = @import("utils/utils.zig").itof;
+const ftou = @import("utils/utils.zig").ftou;
 const Home = @import("game/home.zig").Home;
 const Robot = @import("game/robot.zig").Robot;
 

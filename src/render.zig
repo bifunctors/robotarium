@@ -2,15 +2,16 @@ const std = @import("std");
 const tilemap = @import("tilemap.zig");
 const Robot = @import("game/robot.zig").Robot;
 const Home = @import("game/home.zig").Home;
-const ftoi = @import("utils.zig").ftoi;
-const itof = @import("utils.zig").itof;
-const ftou = @import("utils.zig").ftou;
-const utof = @import("utils.zig").utof;
-const utoi = @import("utils.zig").utoi;
+const ftoi = @import("utils/utils.zig").ftoi;
+const itof = @import("utils/utils.zig").itof;
+const ftou = @import("utils/utils.zig").ftou;
+const utof = @import("utils/utils.zig").utof;
+const utoi = @import("utils/utils.zig").utoi;
 const comp = @import("component.zig");
 const rl = @import("raylib");
 const main = @import("main.zig");
 const Notification = @import("ui/notification.zig").Notification;
+const NotificationRenderer = @import("ui/notification.zig").NotificationRenderer;
 
 const Arraylist = std.ArrayList;
 const TileType = tilemap.TileType;
@@ -129,30 +130,57 @@ pub fn render_tilemap(map: *const Arraylist(TileType)) void {
 }
 
 pub fn render_notifications(dt: f32) void {
-    const notif_width = 30;
-    for (Notification.Notifications.items, 0..) |*notif, i| {
+    var i: usize = 0;
+    while (i < Notification.Notifications.items.len) {
+        const notif = &Notification.Notifications.items[i];
+
         if (notif.timer >= notif.duration) {
             _ = Notification.Notifications.orderedRemove(i);
             break;
         }
+
         notif.timer += dt;
+        const progress = notif.timer / notif.duration;
 
-        var buf: [100]u8 = undefined;
-        const msg = std.fmt.bufPrintZ(&buf, "{s}", .{ notif.msg }) catch "";
+        // Format message once
+        var buf: [256]u8 = undefined;
+        const msg = std.fmt.bufPrintZ(&buf, "{s}", .{notif.msg}) catch "Error";
 
-        const text_width = rl.measureText(msg, 25);
-        const x = main.WIDTH - text_width - (notif_width / 2) - 25;
+        // Calculate dimensions
+        const text_width = rl.measureText(msg, NotificationRenderer.FONT_SIZE);
+        const actual_width = @max(text_width + (NotificationRenderer.NOTIF_PADDING * 2), NotificationRenderer.NOTIF_WIDTH);
 
-        const rec = rl.Rectangle{
-            .x = itof(x),
-            .y = utof(25 + (55 * i)),
-            .width = itof(text_width + notif_width),
-            .height = 40,
+        // Position with animation
+        const base_y = NotificationRenderer.NOTIF_MARGIN +
+            (NotificationRenderer.NOTIF_HEIGHT + NotificationRenderer.NOTIF_MARGIN) * @as(i32, @intCast(i));
+        const offset_x = NotificationRenderer.calculateOffset(progress);
+
+        const rect = rl.Rectangle{
+            .x = @as(f32, @floatFromInt(main.WIDTH)) - @as(f32, @floatFromInt(actual_width)) -
+                @as(f32, @floatFromInt(NotificationRenderer.NOTIF_MARGIN)) + offset_x,
+            .y = @as(f32, @floatFromInt(base_y)),
+            .width = @as(f32, @floatFromInt(actual_width)),
+            .height = @as(f32, @floatFromInt(NotificationRenderer.NOTIF_HEIGHT)),
         };
 
-        rl.drawRectangleRounded(rec, 3, 10, .pink);
-        rl.drawRectangleRoundedLinesEx(rec, 3, 10, 2, .white);
-        rl.drawText(msg, x + 20, utoi(35 + (55 * i)), 25, .black);
+        // Calculate colors with fade
+        const alpha = NotificationRenderer.calculateAlpha(progress);
+        const bg_color = rl.Color{ .r = 255, .g = 182, .b = 193, .a = @as(u8, @intFromFloat(alpha * 200)) }; // Pink with alpha
+        const border_color = rl.Color{ .r = 255, .g = 255, .b = 255, .a = @as(u8, @intFromFloat(alpha * 255)) };
+        const text_color = rl.Color{ .r = 0, .g = 0, .b = 0, .a = @as(u8, @intFromFloat(alpha * 255)) };
+
+        // Render notification
+        rl.drawRectangleRounded(rect, NotificationRenderer.CORNER_RADIUS, NotificationRenderer.CORNER_SEGMENTS, bg_color);
+        rl.drawRectangleRoundedLinesEx(rect, NotificationRenderer.CORNER_RADIUS, NotificationRenderer.CORNER_SEGMENTS, 2, border_color);
+
+        // Center text vertically
+        const text_y = @as(i32, @intFromFloat(rect.y)) +
+            (NotificationRenderer.NOTIF_HEIGHT - NotificationRenderer.FONT_SIZE) / 2;
+        const text_x = @as(i32, @intFromFloat(rect.x)) + NotificationRenderer.NOTIF_PADDING;
+
+        rl.drawText(msg, text_x, text_y, NotificationRenderer.FONT_SIZE, text_color);
+
+        i += 1;
     }
 }
 

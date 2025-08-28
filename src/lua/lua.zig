@@ -6,6 +6,7 @@ const robot_api = @import("lua_robot_api.zig");
 const tilemap = @import("../tilemap.zig");
 const file_contents = @import("lua_files.zig");
 const comp = @import("../component.zig");
+const log = @import("log");
 const notify = @import("../ui/notification.zig").notify;
 const kf = @import("kfolders");
 const Lua = zlua.Lua;
@@ -63,15 +64,15 @@ pub fn lua_main() !void {
                 const main_file = try std.fs.createFileAbsolute(main_lua_path, .{});
                 defer main_file.close();
                 try main_file.writeAll(file_contents.MAIN_API_LUA_FILE);
-                std.debug.print("main.lua not found at: {s}\n", .{path_formatted});
-                std.debug.print("Automatically created a main.lua\n", .{});
+                log.debug("main.lua was not found at: {s}", .{path_formatted});
+                log.debug("Created main.lua", .{});
             },
             else => return err,
         };
 
         try lua_state.doFile(path_formatted);
     } else {
-        std.debug.print("Could not open XDG_CONFIG directory.\n", .{});
+        log.err("Could Not Open XDG_CONFIG Directory", .{});
     }
 }
 
@@ -117,14 +118,14 @@ fn create_lua_api_files() !void {
 pub fn lua_loop() !void {
     create_robots_table();
     _ = lua_state.getGlobal("Update") catch {
-        std.debug.print("No update() function found in main.lua\n", .{});
+        log.err("No Update() function was found in main.lua", .{});
         return LuaErrors.NoUpdateFunction;
     };
 
     if (lua_state.isFunction(-1)) {
         lua_state.call(.{ .results = 0, .args = 0 });
     } else {
-        std.debug.print("Update is not a function\n", .{});
+        log.err("Update is not a function", .{});
         lua_state.pop(1);
     }
 }
@@ -173,11 +174,11 @@ fn lua_create_robot(L: *Lua) callconv(.c) c_int {
     const name = L.toString(1) catch return 1;
 
     Robot.init(name, current_home_id) catch {
-        std.debug.print("Could not create robot\n", .{});
+        log.err("Could Not Create Robot", .{});
         return 0;
     };
 
-    std.debug.print("> Robot Named: {s} Has Been Created\n", .{name});
+    log.info("Robot Named '{s}' Has Been Created", .{name});
 
     return 0;
 }
@@ -185,14 +186,14 @@ fn lua_create_robot(L: *Lua) callconv(.c) c_int {
 fn lua_print(L: *Lua) callconv(.c) c_int {
     const msg = L.toString(1) catch return 1;
 
-    std.debug.print("> {s}\n", .{msg});
+    log.info("> {s}", .{msg});
 
     return 0;
 }
 
 fn lua_notify(L: *Lua) callconv(.c) c_int {
     const msg = L.toString(1) catch return 1;
-    notify(msg) catch std.debug.print("Could Not Notify Message: {s}\n", .{msg});
+    notify(msg) catch log.err("Could Not Notify Message: {s}", .{msg});
     return 0;
 }
 

@@ -2,18 +2,19 @@ const std = @import("std");
 const ecs = @import("ecs");
 const zlua = @import("zlua");
 const comp = @import("../component.zig");
+const log = @import("log");
 const Robot = @import("../game/robot.zig").Robot;
 const Lua = zlua.Lua;
 
 pub fn lua_robot_forward(L: *Lua) callconv(.c) c_int {
     if (!L.isTable(1)) {
-        std.debug.print("forward() must be called with : syntax", .{});
+        log.err("forward() must be called with : synax. Example: robot:forward()", .{});
         return 0;
     }
 
     _ = L.getField(1, "id");
     const id = L.toInteger(-1) catch {
-        std.debug.print("Could not get robot ID from table\n", .{});
+        log.err("Could Not Get Robot ID From Lua Table", .{});
         L.pop(1);
         return 0;
     };
@@ -27,18 +28,18 @@ pub fn lua_robot_forward(L: *Lua) callconv(.c) c_int {
 
 pub fn lua_robot_move(L: *Lua) callconv(.c) c_int {
     if (!L.isTable(1)) {
-        std.debug.print("move(direction) must be called with : syntax", .{});
+        log.err("move() must be called with : synax. Example: robot:move(\"north\")", .{});
         return 0;
     }
 
     const direction = L.toString(2) catch {
-        std.debug.print("Move() requires direction\n", .{});
+        log.err("move() requires a direction", .{});
         return 0;
     };
 
     _ = L.getField(1, "id");
     const id = L.toInteger(-1) catch {
-        std.debug.print("Could not get robot ID from table\n", .{});
+        log.err("Could Not Get A Robot ID From The Lua Table", .{});
         L.pop(1);
         return 0;
     };
@@ -52,26 +53,26 @@ pub fn lua_robot_move(L: *Lua) callconv(.c) c_int {
 
 pub fn lua_robot_can_move(L: *Lua) callconv(.c) c_int {
     if (!L.isTable(1)) {
-        std.debug.print("canMove(direction) must be called with : syntax\n", .{});
+        log.err("canMove() must be called with : synax. Example: robot:canMove(\"north\")", .{});
         return 0;
     }
 
     // Get the string and copy it immediately
     const direction_ptr = L.toString(2) catch {
-        std.debug.print("canMove() requires direction\n", .{});
+        log.err("canMove() lua method requires a direction", .{});
         return 0;
     };
 
     // Copy to a stack buffer to avoid GC issues
     var direction_buf: [64]u8 = undefined;
     const direction = std.fmt.bufPrint(&direction_buf, "{s}", .{direction_ptr}) catch {
-        std.debug.print("Direction string too long\n", .{});
+        log.err("Direction String Was Too Long", .{});
         return 0;
     };
 
     _ = L.getField(1, "id");
     const id = L.toInteger(-1) catch {
-        std.debug.print("Could not get robot ID from table\n", .{});
+        log.err("Could Not Get Robot ID From Lua Table", .{});
         L.pop(1);
         return 0;
     };

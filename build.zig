@@ -13,6 +13,9 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
+
+    // External Dependencies
+
     const raylib_dep = b.dependency("raylib_zig", .{
         .target = target,
         .optimize = optimize,
@@ -33,6 +36,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+
+    // Internal Modules
+
+    const log_dep = b.addModule("log", .{
+        .root_source_file = b.path("src/utils/log.zig"),
+    });
+
+
     // This adds the known-folders module to the executable which can then be imported with `@import("known-folders")`
 
     const raylib = raylib_dep.module("raylib"); // main raylib module
@@ -47,6 +58,7 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("zlua", lua_dep.module("zlua"));
     exe.root_module.addImport("raygui", raygui);
     exe.root_module.addImport("kfolders", known_folders);
+    exe.root_module.addImport("log", log_dep);
 
     b.installArtifact(exe);
 

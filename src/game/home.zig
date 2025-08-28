@@ -2,8 +2,8 @@ const std = @import("std");
 const ecs = @import("ecs");
 const comp = @import("../component.zig");
 const tilemap = @import("../tilemap.zig");
-const ftoi = @import("../utils.zig").ftoi;
-const itof = @import("../utils.zig").itof;
+const ftoi = @import("../utils/utils.zig").ftoi;
+const itof = @import("../utils/utils.zig").itof;
 const Player = @import("player.zig").Player;
 const ArrayList = std.ArrayList;
 

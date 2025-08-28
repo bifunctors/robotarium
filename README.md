@@ -7,6 +7,7 @@ Programming game about little robots
 - [x] Fix Robot Spawning
 - [x] Move Lua Files to Config Directory
 - [x] Global Tick Count
+- [x] Add Proper Logging
 - [ ] Add Robot Names Above Their Head
 - [ ] Expand Robot Lua API ( See Below )
 - [ ] Look Into Servers
