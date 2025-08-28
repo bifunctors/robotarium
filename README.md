@@ -10,6 +10,10 @@ Programming game about little robots
 - [x] Add Proper Logging
 - [x] Add Robot Names Above Their Head
 - [x] Add Home Names Above Their Head
+- [x] Add a standard for what is on a tile
+- [ ] Add stacks of items to the game
+- [ ] Inventory System
+- [ ] Add animations to robots
 - [ ] Add more generated buildings
 - [ ] Save world generations
 - [ ] Only render part of the map player is looking at
@@ -20,7 +24,6 @@ Programming game about little robots
 - [ ] Add actual textures for things
 - [ ] Different Robot Types
 - [ ] Robots have amounts of energy
-- [ ] Add a standard for what is on a tile
 
 ### Lua Robot API Goals
 
@@ -30,6 +33,7 @@ Programming game about little robots
 - [ ] scan(), Scans Tile Underneath Robot
 - [ ] scan(dir), Scans Tile in direction of robot
 - [ ] inventory(), Returns table of personal inventory of robot
+- [ ] invSize(), Returns Size of inventory
 - [ ] deposit(item, dir), Deposits item in dir
 - [ ] harvest(), If on top of harvestable tile
 - [ ] canHarvest(), Returns true if tile is harvestable

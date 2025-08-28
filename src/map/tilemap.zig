@@ -27,9 +27,9 @@ pub fn generate_map() !Arraylist(Tile) {
         const num = rand.intRangeAtMost(u8, 0, 5);
 
         const base: BaseType = switch (num) {
-            0 => .ROCK,
-            1 => .MUD,
-            else => .GRASS,
+            0 => .rock,
+            1 => .mud,
+            else => .grass,
         };
 
         const t = Tile{

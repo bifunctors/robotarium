@@ -1,20 +1,22 @@
+const Item = @import("../game/item.zig").Item;
 pub const BaseType = union(enum) {
-    GRASS,
-    ROCK,
-    MUD,
-    CONCRETE,
+    grass,
+    rock,
+    mud,
+    coal: Item,
 
     pub fn to_string(this: *const BaseType) []const u8 {
         return switch (this.*) {
-            .GRASS => "GRASS",
-            .ROCK => "ROCK",
-            .MUD => "MUD",
-            .CONCRETE => "CONCRETE",
+            .grass => "GRASS",
+            .rock => "ROCK",
+            .mud => "MUD",
+            .coal => "CONCRETE",
         };
     }
 
     pub fn is_mineable(base: *BaseType) bool {
         return switch (base) {
+            .coal => true,
             else => false
         };
     }

@@ -140,10 +140,10 @@ pub fn render_tilemap() void {
         const y: i32 = @intCast((idx / TILEMAP_WIDTH) * TILE_SIZE);
 
         switch (tile.base) {
-            .MUD => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_brown),
-            .ROCK => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .brown),
-            .GRASS => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_green),
-            .CONCRETE => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_gray),
+            .mud => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_brown),
+            .rock => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .brown),
+            .grass => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_green),
+            .coal => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_gray),
         }
     }
 

@@ -124,13 +124,12 @@ pub fn lua_init() !void {
         return;
     };
 
-    if(lua_state.isFunction(-1)) {
+    if (lua_state.isFunction(-1)) {
         lua_state.call(.{ .args = 0, .results = 0 });
     } else {
         log.err("Init is not a function", .{});
         lua_state.pop(1);
     }
-
 }
 
 pub fn lua_loop() !void {
@@ -160,6 +159,9 @@ fn create_robots_table() void {
         lua_state.pushInteger(@as(c_long, @intCast(robot.id)));
         lua_state.setField(-2, "id");
 
+        _ = lua_state.pushString(robot.name);
+        lua_state.setField(-2, "name");
+
         const robot_pos = robot.get_position() orelse continue;
         const relative_robot_pos = robot.get_relative_position() orelse continue;
 
@@ -183,6 +185,9 @@ fn create_robots_table() void {
 
         lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_move_cooldown));
         lua_state.setField(-2, "moveCooldown");
+
+        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory));
+        lua_state.setField(-2, "inventory");
 
         lua_state.rawSetIndex(-2, idx);
         idx += 1;
@@ -220,9 +225,65 @@ fn lua_get_tick(L: *Lua) callconv(.c) c_int {
 }
 
 fn lua_notify(L: *Lua) callconv(.c) c_int {
-    const msg = L.toString(1) catch return 1;
+    const msg = L.toString(1) catch return 0;
     notify(msg) catch log.err("Could Not Notify Message: {s}", .{msg});
     return 0;
+}
+
+// return id from robot
+
+fn lua_get_robot(L: *Lua) callconv(.c) c_int {
+    const name_or_id = L.toString(1) catch return 0;
+
+    var possible_robot = Robot.get_name(name_or_id);
+    if (possible_robot == null) {
+        const id_num = std.fmt.parseInt(usize, name_or_id, 10) catch {
+            return 0;
+        };
+        possible_robot = Robot.get_id(id_num);
+        if (possible_robot == null) return 0;
+    }
+
+    const robot = possible_robot.?;
+
+    log.info("Just got robot: {s}", .{robot.name});
+
+    L.newTable();
+
+    lua_state.pushInteger(@as(c_long, @intCast(robot.id)));
+    lua_state.setField(-2, "id");
+
+    _ = lua_state.pushString(robot.name);
+    lua_state.setField(-2, "name");
+
+    const robot_pos = robot.get_position() orelse return 0;
+    const relative_robot_pos = robot.get_relative_position() orelse return 0;
+
+    lua_state.pushInteger(@as(c_long, @intFromFloat(relative_robot_pos.x)));
+    lua_state.setField(-2, "x");
+
+    lua_state.pushInteger(@as(c_long, @intFromFloat(relative_robot_pos.y)));
+    lua_state.setField(-2, "y");
+
+    lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.x)));
+    lua_state.setField(-2, "worldX");
+
+    lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.y)));
+    lua_state.setField(-2, "worldY");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_move));
+    lua_state.setField(-2, "move");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_move));
+    lua_state.setField(-2, "canMove");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_move_cooldown));
+    lua_state.setField(-2, "moveCooldown");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory));
+    lua_state.setField(-2, "inventory");
+
+    return 1;
 }
 
 fn register_lua_functions(L: *Lua) void {
@@ -230,6 +291,9 @@ fn register_lua_functions(L: *Lua) void {
 
     L.pushFunction(zlua.wrap(lua_create_robot));
     L.setField(-2, "createRobot");
+
+    L.pushFunction(zlua.wrap(lua_get_robot));
+    L.setField(-2, "getRobot");
 
     L.pushFunction(zlua.wrap(lua_print));
     L.setField(-2, "print");

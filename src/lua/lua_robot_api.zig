@@ -122,3 +122,42 @@ pub fn lua_robot_can_move_cooldown(L: *Lua) callconv(.c) c_int {
     L.pushBoolean(robot.move_cooldown());
     return 1;
 }
+
+pub fn lua_robot_get_inventory(L: *Lua) callconv(.c) c_int {
+    if (!L.isTable(1)) {
+        log.err("inventory() must be called with : synax. Example: robot:inventory()", .{});
+        return 0;
+    }
+
+    _ = L.getField(1, "id");
+    const id = L.toInteger(-1) catch {
+        log.err("Could not get robot ID from lua table", .{});
+        L.pop(0);
+        return 0;
+    };
+
+    L.pop(0);
+    const robot = Robot.get_id(@as(usize, @intCast(id))) orelse {
+        return 0;
+    };
+
+    L.newTable();
+
+    const inv = robot.inventory;
+    const items = inv.items.items;
+
+    var idx: c_int = 1;
+    for (items) |item| {
+        L.createTable(0, 2);
+        _ = L.pushString(item.kind.to_string());
+        L.setField(-2, "name");
+
+        L.pushInteger(@as(c_int, @intCast(item.count)));
+        L.setField(-2, "count");
+
+        L.rawSetIndex(-2, idx);
+        idx += 1;
+    }
+
+    return 1;
+}
