@@ -147,6 +147,21 @@ pub const Robot = struct {
         return null;
     }
 
+
+    pub fn get_size(robot: *Robot) ?*comp.Size {
+        var reg = comp.get_registry();
+        var view = reg.view(.{ Robot, comp.Size }, .{});
+        var iter = view.entityIterator();
+        while(iter.next()) |e| {
+            const entity_robot = view.get(Robot, e);
+            const size = view.get(comp.Size, e);
+            if(entity_robot.id == robot.id) {
+                return size;
+            }
+        }
+        return null;
+    }
+
     pub fn get_relative_position(robot: *Robot) ?*comp.Position {
         const robot_pos = robot.get_position() orelse return null;
         const home_pos = robot.get_home().?.get_position() orelse return null;

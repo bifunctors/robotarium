@@ -33,15 +33,18 @@ fn render_robots() void {
 
     for (robots) |robot| {
         const pos = robot.get_position() orelse continue;
+        const size = robot.get_size() orelse continue;
 
         const tile_x = ord_to_tile(pos.x);
         const tile_y = ord_to_tile(pos.y);
         rl.drawRectangle(tile_x, tile_y, 50, 50, .orange);
 
+        // Format name
         var buf: [100]u8 = undefined;
-        const str = std.fmt.bufPrintZ(&buf, "{s}", .{ robot.name }) catch "";
+        const name = std.fmt.bufPrintZ(&buf, "{s}", .{robot.name}) catch "";
 
-        rl.drawText(str, tile_x, tile_y, 15, .black);
+        render_nametag(name, pos.*, size.*);
+
     }
 }
 
@@ -52,6 +55,7 @@ fn render_homes() void {
         const pos = home.get_position() orelse continue;
         const size = home.get_size() orelse continue;
 
+
         rl.drawRectangle(
             toi(pos.x) * TILE_SIZE,
             toi(pos.y) * TILE_SIZE,
@@ -59,6 +63,10 @@ fn render_homes() void {
             TILE_SIZE * ftoi(size.y),
             .purple,
         );
+
+        const player = home.get_player() orelse continue;
+        render_nametag(player.name, pos.*, size.*);
+
     }
 }
 
@@ -93,7 +101,6 @@ pub fn get_mouse_world_position(camera: *rl.Camera2D) comp.Position {
     return .{ .x = itof(tile_x), .y = itof(tile_y) };
 }
 
-
 pub fn render_tilemap() void {
     const map = &globals.MAP;
     const cols: i32 = TILEMAP_WIDTH;
@@ -105,8 +112,9 @@ pub fn render_tilemap() void {
 
         switch (tile.base) {
             .MUD => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_brown),
-            .ROCK => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_gray),
+            .ROCK => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .brown),
             .GRASS => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_green),
+            .CONCRETE => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_gray),
         }
     }
 
@@ -119,6 +127,64 @@ pub fn render_tilemap() void {
         const y: i32 = @as(i32, @intCast(r)) * TILE_SIZE;
         rl.drawLine(0, y, cols * TILE_SIZE, y, rl.Color.black);
     }
+}
+
+pub fn render_nametag(entity_name: []const u8, pos: comp.Position, size: comp.Size) void {
+    const font_size = 14;
+    const padding = 6;
+    const verical_offset = 8;
+
+    var buf: [100]u8 = undefined;
+    const name = std.fmt.bufPrintZ(&buf, "{s}", .{entity_name}) catch "";
+
+    const name_width = rl.measureText(name, font_size);
+
+    const tag_width = name_width + (padding * 2);
+    const tag_height = font_size + (padding * 2);
+
+    const entity_screen_x = ord_to_tile(pos.x);
+    const entity_screen_y = ord_to_tile(pos.y);
+
+    const entity_screen_width = ftoi(size.x) * TILE_SIZE;
+    const tag_x = entity_screen_x + ftoi(itof(entity_screen_width - tag_width) / 2);
+    const tag_y = entity_screen_y - tag_height - verical_offset;
+    const shadow_offset = 2;
+
+    // shadow
+    rl.drawRectangle(
+        tag_x + shadow_offset,
+        tag_y + shadow_offset,
+        tag_width,
+        tag_height,
+        rl.Color{ .r = 0, .g = 0, .b = 0, .a = 60 },
+    );
+
+    // background
+    rl.drawRectangle(
+        tag_x,
+        tag_y,
+        tag_width,
+        tag_height,
+        rl.Color{ .r = 40, .g = 44, .b = 52, .a = 220 },
+    );
+
+    // border
+    rl.drawRectangleLines(
+        tag_x,
+        tag_y,
+        tag_width,
+        tag_height,
+        rl.Color{ .r = 200, .g = 200, .b = 200, .a = 180 },
+    );
+
+    // Text
+    rl.drawText(
+        name,
+        tag_x + padding,
+        tag_y + padding,
+        font_size,
+        rl.Color{ .r = 255, .g = 255, .b = 255, .a = 255 },
+    );
 }
 
 pub fn render_notifications(dt: f32) void {

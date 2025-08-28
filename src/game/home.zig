@@ -104,4 +104,17 @@ pub const Home = struct {
         }
         return null;
     }
+
+    pub fn get_player(home: *Home) ?*Player {
+        var reg = comp.get_registry();
+        var view = reg.view(.{ Player }, .{});
+        var iter = view.entityIterator();
+
+        while (iter.next()) |e| {
+            const player: *Player = reg.get(Player, e);
+            if (player.id != home.player_id) continue;
+            return player;
+        }
+        return null;
+    }
 };

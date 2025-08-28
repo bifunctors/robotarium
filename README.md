@@ -8,7 +8,8 @@ Programming game about little robots
 - [x] Move Lua Files to Config Directory
 - [x] Global Tick Count
 - [x] Add Proper Logging
-- [ ] Add Robot Names Above Their Head
+- [x] Add Robot Names Above Their Head
+- [x] Add Home Names Above Their Head
 - [ ] Expand Robot Lua API ( See Below )
 - [ ] Look Into Servers
 - [ ] Refactor if going Multiplayer route
@@ -33,6 +34,7 @@ Programming game about little robots
 - [ ] broadcast(channel, msg), Broadcast arbitraty data on channel
 - [ ] listen(channel), Receive messages on channel
 - [ ] getMessages(channel), Get all messages in channel or something
+
 - Maybe some sort of memory / storage
 
 ## Gameplay

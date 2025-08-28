@@ -72,7 +72,7 @@ pub fn main() anyerror!void {
         }
 
         // Run every tick
-        if (previus_tick > globals.TICK) {
+        if (previus_tick < globals.TICK) {
             try lua.lua_loop();
         }
 
