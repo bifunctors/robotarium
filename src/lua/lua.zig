@@ -3,7 +3,7 @@ const zlua = @import("zlua");
 const Robot = @import("../game/robot.zig").Robot;
 const ecs = @import("ecs");
 const robot_api = @import("lua_robot_api.zig");
-const tilemap = @import("../tilemap.zig");
+const tilemap = @import("../map/tilemap.zig");
 const file_contents = @import("lua_files.zig");
 const comp = @import("../component.zig");
 const log = @import("log");
@@ -142,12 +142,13 @@ fn create_robots_table() void {
         lua_state.pushInteger(@as(c_long, @intCast(robot.id)));
         lua_state.setField(-2, "id");
 
-        const robot_pos = robot.get_world_position() orelse comp.Position{ .x = 0, .y = 0 };
+        const robot_pos = robot.get_position() orelse continue;
+        const relative_robot_pos = robot.get_relative_position() orelse continue;
 
-        lua_state.pushInteger(@as(c_long, @intFromFloat(robot.relative_position.x)));
+        lua_state.pushInteger(@as(c_long, @intFromFloat(relative_robot_pos.x)));
         lua_state.setField(-2, "x");
 
-        lua_state.pushInteger(@as(c_long, @intFromFloat(robot.relative_position.y)));
+        lua_state.pushInteger(@as(c_long, @intFromFloat(relative_robot_pos.y)));
         lua_state.setField(-2, "y");
 
         lua_state.pushInteger(@as(c_long, @intFromFloat(robot_pos.x)));

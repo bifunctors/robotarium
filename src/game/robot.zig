@@ -1,7 +1,8 @@
 const std = @import("std");
 const ecs = @import("ecs");
 const comp = @import("../component.zig");
-const tilemap = @import("../tilemap.zig");
+const tilemap = @import("../map/tilemap.zig");
+const Tile = @import("../map/tile.zig").Tile;
 const log = @import("log");
 const globals = @import("../globals.zig");
 const ftoi = @import("../utils/utils.zig").ftoi;
@@ -14,7 +15,6 @@ pub const Robot = struct {
     id: usize,
     name: []const u8,
     home_id: usize,
-    relative_position: comp.Position,
     last_move_tick: u64 = 0,
 
     var next_robot_id: usize = 1;
@@ -29,10 +29,9 @@ pub const Robot = struct {
         std.mem.copyForwards(u8, name_copy, name);
 
         const home = Home.get_id(home_id) orelse return;
-        const pos = home.get_position() orelse return;
-        // const size = home.get_size() orelse return;
+        const home_pos = home.get_position() orelse return;
 
-        const relative_position = find_valid_spawn_position(home, pos) orelse {
+        const robot_pos = find_valid_spawn_position(home, home_pos) orelse {
             log.err("Could Not Find a valid position for robot at: {}", .{ home.id });
             return;
         };
@@ -40,13 +39,11 @@ pub const Robot = struct {
         const r = Robot{
             .name = name_copy,
             .id = id,
-            .relative_position = relative_position,
             .home_id = home_id,
         };
 
         reg.add(entity, r);
-
-        reg.add(entity, comp.Position{ .x = pos.x + relative_position.x, .y = pos.y + relative_position.y });
+        reg.add(entity, comp.Position{ .x = robot_pos.x, .y = robot_pos.y });
         reg.add(entity, comp.Size{ .x = 1, .y = 1 });
     }
 
@@ -64,15 +61,15 @@ pub const Robot = struct {
             const offset_x = random.intRangeAtMost(i32, -range, range);
             const offset_y = random.intRangeAtMost(i32, -range, range);
 
-            const test_x = home_pos.x + @as(f32, @floatFromInt(offset_x));
-            const test_y = home_pos.y + @as(f32, @floatFromInt(offset_y));
+            var test_position = comp.Position{
+                .x = home_pos.x + @as(f32, @floatFromInt(offset_x)),
+                .y = home_pos.y + @as(f32, @floatFromInt(offset_y))
+            };
 
-            const tile_type = tilemap.check_square(ftoi(test_x), ftoi(test_y));
-
-            // Check if position is valid (not occupied and within bounds)
-            if (tile_type == .NONE) {
-                return comp.Position{ .x = itof(offset_x), .y = itof(offset_y) };
+            if(!Tile.has_entity(&test_position)) {
+                return test_position;
             }
+
         }
 
         // Just search for first one if random doesnt work
@@ -80,13 +77,13 @@ pub const Robot = struct {
         while (y <= range) : (y += 1) {
             var x: i32 = -range;
             while (x <= range) : (x += 1) {
-                const test_x = home_pos.x + @as(f32, @floatFromInt(x));
-                const test_y = home_pos.y + @as(f32, @floatFromInt(y));
+                const test_postion = comp.Position{
+                    .x = home_pos.x + @as(f32, @floatFromInt(x)),
+                    .y = home_pos.y + @as(f32, @floatFromInt(y)),
+                };
 
-                const tile_type = tilemap.check_square(ftoi(test_x), ftoi(test_y));
-
-                if (tile_type == .NONE) {
-                    return comp.Position{ .x = itof(x), .y = itof(y) };
+                if(!Tile.has_entity(&test_postion)) {
+                    return test_postion;
                 }
             }
         }
@@ -137,25 +134,25 @@ pub const Robot = struct {
     }
 
     pub fn get_position(robot: *Robot) ?*comp.Position {
-        return &robot.relative_position;
-    }
-
-    pub fn get_world_position(robot: *Robot) ?comp.Position {
         var reg = comp.get_registry();
         var view = reg.view(.{ Robot, comp.Position }, .{});
         var iter = view.entityIterator();
-
-        while (iter.next()) |e| {
-            const r = reg.get(Robot, e);
-            if (r.id != robot.id) continue;
-            const home = robot.get_home() orelse continue;
-            const pos = home.get_position() orelse continue;
-            return comp.Position{
-                .x = pos.x + robot.relative_position.x,
-                .y = pos.y + robot.relative_position.y,
-            };
+        while(iter.next()) |e| {
+            const entity_robot = view.get(Robot, e);
+            const pos = view.get(comp.Position, e);
+            if(entity_robot.id == robot.id) {
+                return pos;
+            }
         }
         return null;
+    }
+
+    pub fn get_relative_position(robot: *Robot) ?*comp.Position {
+        const robot_pos = robot.get_position() orelse return null;
+        const home_pos = robot.get_home().?.get_position() orelse return null;
+
+        var relative_pos = comp.Position{ .x = home_pos.x - robot_pos.x, .y = home_pos.y - robot_pos.y };
+        return &relative_pos;
     }
 
     pub fn get_home(robot: *Robot) ?*Home {
@@ -203,22 +200,22 @@ pub const Robot = struct {
 
     pub fn forward(robot: *Robot) void {
         if (!check_movable_tile(robot, 0, -1)) return;
-        robot.relative_position.y -= 1;
+        robot.get_position().?.y -= 1;
     }
 
     pub fn backward(robot: *Robot) void {
         if (!check_movable_tile(robot, 0, 1)) return;
-        robot.relative_position.y += 1;
+        robot.get_position().?.y += 1;
     }
 
     pub fn left(robot: *Robot) void {
         if (!check_movable_tile(robot, -1, 0)) return;
-        robot.relative_position.x -= 1;
+        robot.get_position().?.x -= 1;
     }
 
     pub fn right(robot: *Robot) void {
         if (!check_movable_tile(robot, 1, 0)) return;
-        robot.relative_position.x += 1;
+        robot.get_position().?.x += 1;
     }
 
     pub fn check_movable_tile(robot: *Robot, x_offset: f32, y_offset: f32) bool {
@@ -229,13 +226,16 @@ pub const Robot = struct {
     }
 
     pub fn check_tile_not_taken(robot: *Robot, x_offset: f32, y_offset: f32) bool {
-        const pos = robot.get_world_position() orelse return false;
-        const square = tilemap.check_square(ftoi(pos.x + x_offset), ftoi(pos.y + y_offset));
-        return square == .NONE;
+        const pos = robot.get_position() orelse return false;
+        var offset_pos = comp.Position{
+            .x = pos.x + x_offset,
+            .y = pos.y + y_offset,
+        };
+        return !Tile.has_entity(&offset_pos);
     }
 
     pub fn check_within_range(robot: *Robot, x_offset: f32, y_offset: f32) bool {
-        const pos = robot.get_world_position() orelse return false;
+        const pos = robot.get_position() orelse return false;
 
         const home = robot.get_home() orelse return false;
         const home_pos = home.get_position() orelse return false;

@@ -1,36 +1,47 @@
 const std = @import("std");
-const tilemap = @import("tilemap.zig");
+const tilemap = @import("map/tilemap.zig");
 const Robot = @import("game/robot.zig").Robot;
 const Home = @import("game/home.zig").Home;
+const Tile = @import("map/tile.zig").Tile;
 const ftoi = @import("utils/utils.zig").ftoi;
 const itof = @import("utils/utils.zig").itof;
 const ftou = @import("utils/utils.zig").ftou;
 const utof = @import("utils/utils.zig").utof;
 const utoi = @import("utils/utils.zig").utoi;
+const log = @import("log");
 const comp = @import("component.zig");
 const rl = @import("raylib");
+const globals = @import("globals.zig");
 const main = @import("main.zig");
 const Notification = @import("ui/notification.zig").Notification;
 const NotificationRenderer = @import("ui/notification.zig").NotificationRenderer;
 
 const Arraylist = std.ArrayList;
-const TileType = tilemap.TileType;
-const TILEMAP_WIDTH = tilemap.TILEMAP_WIDTH;
+const TileType = tilemap.BaseType;
+const TILEMAP_WIDTH = tilemap.MAP_WIDTH;
 const TILE_SIZE = tilemap.TILE_SIZE;
 
-pub fn render(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
-    render_tilemap(map);
+pub fn render(camera: *rl.Camera2D) void {
+    render_tilemap();
     render_homes();
     render_robots();
-    render_mouse(map, camera);
+    render_mouse(camera);
 }
 
 fn render_robots() void {
     const robots = Robot.get_all() catch return;
 
     for (robots) |robot| {
-        const pos = robot.get_world_position() orelse continue;
-        rl.drawRectangle(toi(pos.x) * TILE_SIZE, toi(pos.y) * TILE_SIZE, 50, 50, .orange);
+        const pos = robot.get_position() orelse continue;
+
+        const tile_x = ord_to_tile(pos.x);
+        const tile_y = ord_to_tile(pos.y);
+        rl.drawRectangle(tile_x, tile_y, 50, 50, .orange);
+
+        var buf: [100]u8 = undefined;
+        const str = std.fmt.bufPrintZ(&buf, "{s}", .{ robot.name }) catch "";
+
+        rl.drawText(str, tile_x, tile_y, 15, .black);
     }
 }
 
@@ -51,7 +62,8 @@ fn render_homes() void {
     }
 }
 
-fn render_mouse(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
+fn render_mouse(camera: *rl.Camera2D) void {
+    const map = &globals.MAP;
     const mouse_pos = rl.getMousePosition();
     const world_mouse_pos = rl.getScreenToWorld2D(mouse_pos, camera.*);
 
@@ -72,7 +84,7 @@ fn render_mouse(map: *const Arraylist(TileType), camera: *rl.Camera2D) void {
     }
 }
 
-pub fn get_mouse_tile(camera: *rl.Camera2D) comp.Position {
+pub fn get_mouse_world_position(camera: *rl.Camera2D) comp.Position {
     const mouse_pos = rl.getMousePosition();
     const world_mouse_pos = rl.getScreenToWorld2D(mouse_pos, camera.*);
 
@@ -81,29 +93,9 @@ pub fn get_mouse_tile(camera: *rl.Camera2D) comp.Position {
     return .{ .x = itof(tile_x), .y = itof(tile_y) };
 }
 
-pub fn get_mouse_tile_type(map: *const Arraylist(TileType), camera: *rl.Camera2D) ?TileType {
-    const mouse_pos = rl.getMousePosition();
-    const world_mouse_pos = rl.getScreenToWorld2D(mouse_pos, camera.*);
 
-    const tile_x = ftoi(world_mouse_pos.x / TILE_SIZE);
-    const tile_y = ftoi(world_mouse_pos.y / TILE_SIZE);
-
-    const cols: i32 = TILEMAP_WIDTH;
-    const rows: i32 = @intCast(map.items.len / TILEMAP_WIDTH);
-
-    if (tile_x >= 0 and tile_x < cols and tile_y >= 0 and tile_y < rows) {
-        // Calculate the index in the map array
-        const tile_index = @as(usize, @intCast(tile_y * cols + tile_x));
-
-        // Return the tile type at this position
-        return map.items[tile_index];
-    }
-
-    // Return null if mouse is outside the tilemap bounds
-    return null;
-}
-
-pub fn render_tilemap(map: *const Arraylist(TileType)) void {
+pub fn render_tilemap() void {
+    const map = &globals.MAP;
     const cols: i32 = TILEMAP_WIDTH;
     const rows: i32 = @intCast(map.items.len / TILEMAP_WIDTH);
 
@@ -111,7 +103,7 @@ pub fn render_tilemap(map: *const Arraylist(TileType)) void {
         const x: i32 = @intCast((idx % TILEMAP_WIDTH) * TILE_SIZE);
         const y: i32 = @intCast((idx / TILEMAP_WIDTH) * TILE_SIZE);
 
-        switch (tile) {
+        switch (tile.base) {
             .MUD => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_brown),
             .ROCK => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_gray),
             .GRASS => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_green),
@@ -182,6 +174,10 @@ pub fn render_notifications(dt: f32) void {
 
         i += 1;
     }
+}
+
+fn ord_to_tile(num: f32) i32 {
+    return toi(num) * TILE_SIZE;
 }
 
 fn toi(x: anytype) i32 {

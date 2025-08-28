@@ -14,6 +14,10 @@ pub fn itof(x: i32) f32 {
     return @as(f32, @floatFromInt(x));
 }
 
+pub fn itou(x: i32) usize {
+    return @as(f32, @intCast(x));
+}
+
 pub fn utoi(x: usize) i32 {
     return @as(i32, @intCast(x));
 }

@@ -5,11 +5,13 @@ const rlgui = @import("raygui");
 const lua = @import("lua/lua.zig");
 const comp = @import("component.zig");
 const ecs = @import("ecs");
-const tilemap = @import("tilemap.zig");
+const tilemap = @import("map/tilemap.zig");
 const globals = @import("globals.zig");
 const notify = @import("ui/notification.zig").notify;
 const ftoi = @import("utils/utils.zig").ftoi;
 const Robot = @import("game/robot.zig").Robot;
+const Tile = @import("map/tile.zig").Tile;
+const Entity = @import("map/entity_type.zig").Entity;
 const log = @import("log");
 const renderer = @import("render.zig");
 const Player = @import("game/player.zig").Player;
@@ -20,15 +22,13 @@ pub const HEIGHT = 800;
 
 var camera = rl.Camera2D{
     .target = rl.Vector2.init(
-        (tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2,
-        (tilemap.TILEMAP_WIDTH * tilemap.TILE_SIZE) / 2,
+        (tilemap.MAP_WIDTH * tilemap.TILE_SIZE) / 2,
+        (tilemap.MAP_WIDTH * tilemap.TILE_SIZE) / 2,
     ),
     .offset = rl.Vector2.init(WIDTH / 2, HEIGHT / 2),
     .rotation = 0,
     .zoom = 0.5,
 };
-
-var map = std.ArrayList(tilemap.TileType){};
 
 pub fn main() anyerror!void {
     init_raylib();
@@ -39,7 +39,7 @@ pub fn main() anyerror!void {
 
     // Generates a random map, this will be procedurally generated in future
     // Probably should use some sort of noise function in the future aswell
-    map = try tilemap.generate_map();
+    globals.MAP = try tilemap.generate_map();
 
     // Creating a player generates them a home automatically
     const home_id = try Player.init("Bilbo Baggings");
@@ -72,7 +72,7 @@ pub fn main() anyerror!void {
         }
 
         // Run every tick
-        if(previus_tick > globals.TICK) {
+        if (previus_tick > globals.TICK) {
             try lua.lua_loop();
         }
 
@@ -87,7 +87,7 @@ pub fn main() anyerror!void {
             rl.beginMode2D(camera);
             defer rl.endMode2D();
 
-            renderer.render(&map, &camera);
+            renderer.render(&camera);
         }
 
         renderer.render_notifications(dt);
@@ -125,17 +125,19 @@ fn input_system() !void {
         camera.target.y += 2;
 
     if (rl.isMouseButtonPressed(.left)) {
-        const tile_type = renderer.get_mouse_tile_type(&map, &camera);
-        const mouse_tile = renderer.get_mouse_tile(&camera);
-        const square = tilemap.check_square(ftoi(mouse_tile.x), ftoi(mouse_tile.y));
+        const tile = Tile.from_mouse(&camera);
+        const mouse_pos = renderer.get_mouse_world_position(&camera);
 
-        const noficiation_msg = try std.fmt.allocPrint(
-            std.heap.page_allocator,
-            "{s} : {s}",
-            .{ tile_type.?.to_string(), square.to_string() },
-        );
+        if (tile) |t| {
+            const entity = Entity.get_tilef(mouse_pos.x, mouse_pos.y);
+            const noficiation_msg = try std.fmt.allocPrint(
+                std.heap.page_allocator,
+                "{s} : {s}",
+                .{ t.base.to_string(), entity.to_string() },
+            );
 
-        try notify(noficiation_msg);
+            try notify(noficiation_msg);
+        }
     }
 
     if (rl.isMouseButtonDown(.middle)) {

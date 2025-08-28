@@ -15,6 +15,7 @@ Programming game about little robots
 - [ ] Possibly Add A Robot Move Stack System ( Only can move one tile per tick )
 - [ ] Different Types of robots?
 - [ ] Robots have amounts of energy
+- [ ] Add a standard for what is on a tile
 
 ### Lua Robot API Goals
 
@@ -39,3 +40,5 @@ Programming game about little robots
 - Robots can move within their homes' range
 - Robots can mine / harvest resources
 - Can use those resources to build waypoints and expand range
+
+- Remove Entity Type union enum
