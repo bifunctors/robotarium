@@ -11,19 +11,23 @@ Programming game about little robots
 - [x] Add Robot Names Above Their Head
 - [x] Add Home Names Above Their Head
 - [x] Add a standard for what is on a tile
+- [x] Inventory System
+- [ ] Fix bug that robots see themselves if they are larger than 1x1
 - [ ] Add stacks of items to the game
-- [ ] Inventory System
 - [ ] Add animations to robots
 - [ ] Add more generated buildings
 - [ ] Save world generations
 - [ ] Only render part of the map player is looking at
 - [ ] Expand Robot Lua API ( See Below )
+- [ ] Add one robot lua api creation method
 - [ ] Look Into Servers
 - [ ] Refactor if going Multiplayer route
 - [ ] Possibly Add A Robot Move Stack System ( Only can move one tile per tick )
 - [ ] Add actual textures for things
-- [ ] Different Robot Types
+- [ ] Add Different Robot Types
 - [ ] Robots have amounts of energy
+- [ ] Crafting Recipes
+- [ ] Interfaces To Things
 
 ### Lua Robot API Goals
 
@@ -32,7 +36,7 @@ Programming game about little robots
 - [x] moveCooldown(), Returns true if robot can actually move this tick
 - [ ] scan(), Scans Tile Underneath Robot
 - [ ] scan(dir), Scans Tile in direction of robot
-- [ ] inventory(), Returns table of personal inventory of robot
+- [x] inventory(), Returns table of personal inventory of robot
 - [ ] invSize(), Returns Size of inventory
 - [ ] deposit(item, dir), Deposits item in dir
 - [ ] harvest(), If on top of harvestable tile

@@ -1,3 +1,6 @@
+// An Item is any resource that can be put in an inventoyr
+// They can have a number attached, which is their *purity* value
+// Higher Purity => more rare => more expensive etc
 pub const Item = struct {
     kind: ItemKind,
     count: usize,
@@ -15,6 +18,13 @@ pub const ItemKind = union(enum) {
         return switch (kind.*) {
             .coal => "Coal",
             .iron => "Iron",
+        };
+    }
+
+    pub fn get_stack_size(kind: ItemKind) usize {
+        return switch (kind) {
+            .coal => 32,
+            .iron => 32,
         };
     }
 };

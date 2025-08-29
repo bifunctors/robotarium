@@ -1,6 +1,7 @@
 const std = @import("std");
 const Item = @import("item.zig").Item;
 
+// Inventory
 pub const Inventory = struct {
     items: std.ArrayList(Item),
     size: InventorySize,
@@ -22,8 +23,16 @@ pub const Inventory = struct {
     }
 };
 
-pub const InventorySize = enum(usize) {
-    large = 30,
-    medium = 20,
-    small = 10,
+pub const InventorySize = enum {
+    large,
+    medium,
+    small,
+
+    pub fn num(size: InventorySize) usize {
+        return switch(size) {
+            .large => 30,
+            .medium => 20,
+            .small => 10
+        };
+    }
 };

@@ -125,7 +125,7 @@ pub fn lua_robot_can_move_cooldown(L: *Lua) callconv(.c) c_int {
 
 pub fn lua_robot_get_inventory(L: *Lua) callconv(.c) c_int {
     if (!L.isTable(1)) {
-        log.err("inventory() must be called with : synax. Example: robot:inventory()", .{});
+        log.err("inv() must be called with : synax. Example: robot:inv()", .{});
         return 0;
     }
 
@@ -159,5 +159,28 @@ pub fn lua_robot_get_inventory(L: *Lua) callconv(.c) c_int {
         idx += 1;
     }
 
+    return 1;
+}
+
+pub fn lua_robot_get_inventory_size(L: *Lua) callconv(.c) c_int {
+    if(!L.isTable(1)) {
+        log.err("invSize() must be called with : synax. Example: robot:invSize()", .{});
+        return 0;
+    }
+
+    _ = L.getField(1, "id");
+    const id = L.toInteger(-1) catch {
+        log.err("Could Not Get Robot ID From Lua Table", .{});
+        L.pop(1);
+        return 0;
+    };
+    L.pop(1);
+
+    const robot = Robot.get_id(@as(usize, @intCast(id))) orelse {
+        L.pushBoolean(false);
+        return 1;
+    };
+
+    L.pushInteger(@intCast(robot.inventory.size.num()));
     return 1;
 }

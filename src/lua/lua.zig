@@ -187,7 +187,10 @@ fn create_robots_table() void {
         lua_state.setField(-2, "moveCooldown");
 
         lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory));
-        lua_state.setField(-2, "inventory");
+        lua_state.setField(-2, "inv");
+
+        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory_size));
+        lua_state.setField(-2, "invSize");
 
         lua_state.rawSetIndex(-2, idx);
         idx += 1;
@@ -200,7 +203,9 @@ fn lua_create_robot(L: *Lua) callconv(.c) c_int {
     // Check if able to create robot
     const name = L.toString(1) catch return 1;
 
-    Robot.init(name, current_home_id) catch {
+    // Add Type In Here as second parameter
+
+    Robot.init(name, current_home_id, .scout) catch {
         log.err("Could Not Create Robot", .{});
         return 0;
     };
@@ -282,6 +287,9 @@ fn lua_get_robot(L: *Lua) callconv(.c) c_int {
 
     lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory));
     lua_state.setField(-2, "inventory");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory_size));
+    lua_state.setField(-2, "invSize");
 
     return 1;
 }

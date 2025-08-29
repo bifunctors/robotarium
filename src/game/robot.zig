@@ -13,18 +13,20 @@ const Home = @import("home.zig").Home;
 const ArrayList = std.ArrayList;
 const Inventory = @import("inventory.zig").Inventory;
 const Item = @import("item.zig").Item;
+const RobotKind = @import("robot_kind.zig").RobotKind;
 
 pub const Robot = struct {
     id: usize,
     name: []const u8,
     home_id: usize,
+    kind: RobotKind,
     last_move_tick: u64 = 0,
     cooldown_ticks: usize = 100,
     inventory: *Inventory,
 
     var next_robot_id: usize = 1;
 
-    pub fn init(name: []const u8, home_id: usize) !void {
+    pub fn init(name: []const u8, home_id: usize, kind: RobotKind) !void {
         var reg = comp.get_registry();
         const entity = reg.create();
         const id = next_robot_id;
@@ -40,25 +42,20 @@ pub const Robot = struct {
         const home = Home.get_id(home_id) orelse return;
         const home_pos = home.get_position() orelse return;
 
-        const inv = try Inventory.init(.small);
-        inv.add(Item.init(.{ .coal = 1 }, 1));
-        inv.add(Item.init(.{ .iron = 1 }, 3));
-
         const robot_pos = find_valid_spawn_position(home, home_pos) orelse {
             log.err("Could Not Find a valid position for robot at: {}", .{home.id});
             return;
         };
 
-        const r = Robot{
-            .name = name_copy,
-            .id = id,
-            .home_id = home_id,
-            .inventory = inv,
+        const r = try kind.create(name, id, home_id);
+
+        const size = switch(kind) {
+            .scout => comp.Size{ .x = 1, .y = 1 },
         };
 
         reg.add(entity, r);
         reg.add(entity, comp.Position{ .x = robot_pos.x, .y = robot_pos.y });
-        reg.add(entity, comp.Size{ .x = 1, .y = 1 });
+        reg.add(entity, size);
     }
 
     pub fn deinit(robot: *Robot) void {

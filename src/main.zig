@@ -96,6 +96,12 @@ pub fn main() anyerror!void {
 
         rl.drawFPS(20, 20);
     }
+
+    const robots = Robot.get_all() catch return;
+
+    for(robots) |robot| {
+        robot.deinit();
+    }
 }
 
 fn input_system() !void {
