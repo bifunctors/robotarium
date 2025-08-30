@@ -13,10 +13,14 @@ Programming game about little robots
 - [x] Add a standard for what is on a tile
 - [x] Inventory System
 - [x] Add Chunking
-- [ ] Add Button To Center On Home
+- [x] Add Button To Center On Home
+- [ ] Save world to file
+- [ ] Add Coords at top of screen
+- [ ] Add rendering optimisations to all entities
 - [ ] Fix bug that robots see themselves if they are larger than 1x1
 - [ ] Add stacks of items to the game
 - [ ] Add more generated buildings
+- [ ] Proper Gui
 - [ ] Add animations to robots
 - [ ] Save world generations
 - [ ] Only render part of the map player is looking at
