@@ -157,5 +157,5 @@ fn input_system() !void {
 
 fn init_raylib() void {
     rl.initWindow(WIDTH, HEIGHT, "Scan");
-    rl.setTargetFPS(120);
+    rl.setTargetFPS(240);
 }

@@ -1,4 +1,4 @@
-# Scan
+# Robotarium
 
 Programming game about little robots
 
@@ -14,8 +14,8 @@ Programming game about little robots
 - [x] Inventory System
 - [ ] Fix bug that robots see themselves if they are larger than 1x1
 - [ ] Add stacks of items to the game
-- [ ] Add animations to robots
 - [ ] Add more generated buildings
+- [ ] Add animations to robots
 - [ ] Save world generations
 - [ ] Only render part of the map player is looking at
 - [ ] Expand Robot Lua API ( See Below )
@@ -28,6 +28,7 @@ Programming game about little robots
 - [ ] Robots have amounts of energy
 - [ ] Crafting Recipes
 - [ ] Interfaces To Things
+- [ ] Method to bind a robot to a script
 
 ### Lua Robot API Goals
 
@@ -41,6 +42,8 @@ Programming game about little robots
 - [ ] deposit(item, dir), Deposits item in dir
 - [ ] harvest(), If on top of harvestable tile
 - [ ] canHarvest(), Returns true if tile is harvestable
+- [ ] mine(), If on top of harvestable tile
+- [x] canMine(), Returns true if tile is harvestable
 - [ ] drop(item), drop item
 - [ ] pickup(), pickup item on tile
 - [ ] attack(dir), attack in dir

@@ -192,6 +192,9 @@ fn create_robots_table() void {
         lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory_size));
         lua_state.setField(-2, "invSize");
 
+        lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_mine));
+        lua_state.setField(-2, "canMine");
+
         lua_state.rawSetIndex(-2, idx);
         idx += 1;
     }
@@ -290,6 +293,12 @@ fn lua_get_robot(L: *Lua) callconv(.c) c_int {
 
     lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory_size));
     lua_state.setField(-2, "invSize");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_get_inventory_size));
+    lua_state.setField(-2, "invSize");
+
+    lua_state.pushFunction(zlua.wrap(robot_api.lua_robot_can_mine));
+    lua_state.setField(-2, "canMine");
 
     return 1;
 }

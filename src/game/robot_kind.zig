@@ -1,6 +1,7 @@
 const Robot = @import("robot.zig").Robot;
 const Inventory = @import("inventory.zig").Inventory;
 const InventorySize = @import("inventory.zig").InventorySize;
+const comp = @import("../component.zig");
 
 pub const RobotKind = enum {
     scout,
@@ -29,6 +30,12 @@ pub const RobotKind = enum {
             .kind = kind,
             .inventory = inv,
             .cooldown_ticks = movement_tick_speed,
+        };
+    }
+
+    pub fn get_size(kind: RobotKind) comp.Size {
+        return switch(kind) {
+            .scout => comp.Size{ .x = 1, .y = 1 },
         };
     }
 };

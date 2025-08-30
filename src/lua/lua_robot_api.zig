@@ -184,3 +184,41 @@ pub fn lua_robot_get_inventory_size(L: *Lua) callconv(.c) c_int {
     L.pushInteger(@intCast(robot.inventory.size.num()));
     return 1;
 }
+
+pub fn lua_robot_can_mine(L: *Lua) callconv(.c) c_int {
+    const robot = get_robot_from_lua(L) orelse return 0;
+
+    var dir: ?Direction = null;
+    const dir_ptr: ?[]const u8 = L.toString(2) catch null;
+
+    if(dir_ptr) |ptr| {
+        var dir_buf: [64]u8 = undefined;
+        const dir_str = std.fmt.bufPrint(&dir_buf, "{s}", .{ptr}) catch null;
+        if(dir_str) |str| {
+            dir = Direction.from_str(str);
+        }
+    }
+
+
+
+    const can_mine = robot.can_mine(dir);
+    L.pushBoolean(can_mine);
+    return 1;
+}
+
+fn get_robot_from_lua(L: *Lua) ?*Robot {
+    if(!L.isTable(1)) {
+        log.err("Must call with :", .{});
+        return null;
+    }
+
+    _ = L.getField(1, "id");
+    const id = L.toInteger(-1) catch {
+        L.pop(1);
+        return null;
+    };
+
+    L.pop(1);
+    const robot = Robot.get_id(@as(usize, @intCast(id))) orelse return null;
+    return robot;
+}

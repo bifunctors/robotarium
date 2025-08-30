@@ -49,10 +49,7 @@ pub const Robot = struct {
 
         const r = try kind.create(name, id, home_id);
 
-        const size = switch(kind) {
-            .scout => comp.Size{ .x = 1, .y = 1 },
-        };
-
+        const size = r.kind.get_size();
         reg.add(entity, r);
         reg.add(entity, comp.Position{ .x = robot_pos.x, .y = robot_pos.y });
         reg.add(entity, size);
@@ -140,7 +137,7 @@ pub const Robot = struct {
         return null;
     }
 
-    pub fn get_position(robot: *Robot) ?*comp.Position {
+    pub fn get_position(robot: *const Robot) ?*comp.Position {
         var reg = comp.get_registry();
         var view = reg.view(.{ Robot, comp.Position }, .{});
         var iter = view.entityIterator();
@@ -235,9 +232,25 @@ pub const Robot = struct {
         robot.get_position().?.x += 1;
     }
 
-    pub fn can_harvest(_: *Robot, _: []const u8) void {
-        return;
+    pub fn can_mine(robot: *const Robot, dir: ?Direction) bool {
+        const pos = robot.get_position() orelse return false;
+
+        var is_mineable: bool = false;
+
+        if(dir) |d| {
+            const rel = d.get_relative_pos();
+            const tile = Tile.from_coordf(pos.x + rel.x, pos.y + rel.y);
+            is_mineable = tile.base.is_mineable();
+        } else {
+            const tile = Tile.from_pos(pos.*);
+            is_mineable = tile.base.is_mineable();
+        }
+
+        log.debug("Tile is mineable: {}", .{ is_mineable });
+
+        return is_mineable;
     }
+
 
     pub fn check_movable_tile(robot: *Robot, x_offset: f32, y_offset: f32) bool {
         if (!check_within_range(robot, x_offset, y_offset)) return false;

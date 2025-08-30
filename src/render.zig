@@ -23,8 +23,8 @@ const TILE_SIZE = tilemap.TILE_SIZE;
 
 pub fn render(camera: *rl.Camera2D) void {
     render_tilemap();
-    render_homes();
     render_robots();
+    render_homes();
     render_mouse(camera);
 }
 
@@ -36,7 +36,6 @@ fn render_robots() void {
         const pos = robot.get_position() orelse continue;
         const size = robot.get_size() orelse continue;
 
-        // Calculate cooldown progress (0.0 = just moved, 1.0 = ready to move)
         const ticks_since_move = globals.TICK - robot.last_move_tick;
         const cooldown_progress = @min(@as(f32, @floatFromInt(ticks_since_move)) / @as(f32, @floatFromInt(robot.cooldown_ticks)), 1.0);
 

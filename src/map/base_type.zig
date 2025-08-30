@@ -15,7 +15,7 @@ pub const BaseType = union(enum) {
     }
 
     pub fn is_mineable(base: *BaseType) bool {
-        return switch (base) {
+        return switch (base.*) {
             .coal => true,
             else => false
         };
