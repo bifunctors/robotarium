@@ -13,6 +13,9 @@ const comp = @import("component.zig");
 const rl = @import("raylib");
 const globals = @import("globals.zig");
 const main = @import("main.zig");
+const Chunk = @import("map/chunk.zig").Chunk;
+const ChunkManager = @import("map/chunk.zig").ChunkManager;
+const CHUNK_SIZE = @import("map/chunk.zig").CHUNK_SIZE;
 const Notification = @import("ui/notification.zig").Notification;
 const NotificationRenderer = @import("ui/notification.zig").NotificationRenderer;
 
@@ -21,8 +24,8 @@ const TileType = tilemap.BaseType;
 const TILEMAP_WIDTH = tilemap.MAP_WIDTH;
 const TILE_SIZE = tilemap.TILE_SIZE;
 
-pub fn render(camera: *rl.Camera2D) void {
-    render_tilemap();
+pub fn render(camera: *rl.Camera2D, chunk_manager: *ChunkManager) void {
+    render_tilemap(camera, chunk_manager);
     render_robots();
     render_homes();
     render_mouse(camera);
@@ -129,32 +132,41 @@ pub fn get_mouse_world_position(camera: *rl.Camera2D) comp.Position {
     return .{ .x = itof(tile_x), .y = itof(tile_y) };
 }
 
-pub fn render_tilemap() void {
-    const map = &globals.MAP;
-    const cols: i32 = TILEMAP_WIDTH;
-    const rows: i32 = @intCast(map.items.len / TILEMAP_WIDTH);
+pub fn render_tilemap(camera: *rl.Camera2D, chunk_manager: *ChunkManager) void {
+    const visible_chunks = chunk_manager.get_visible_chunks(camera);
+    defer std.heap.page_allocator.free(visible_chunks);
 
-    for (map.items, 0..) |tile, idx| {
-        const x: i32 = @intCast((idx % TILEMAP_WIDTH) * TILE_SIZE);
-        const y: i32 = @intCast((idx / TILEMAP_WIDTH) * TILE_SIZE);
+    for (visible_chunks) |chunk| {
+        render_chunk(chunk);
+    }
+}
 
-        switch (tile.base) {
-            .mud => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_brown),
-            .rock => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .brown),
-            .grass => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_green),
-            .coal => rl.drawRectangle(x, y, TILE_SIZE, TILE_SIZE, .dark_gray),
+fn render_chunk(chunk: Chunk) void {
+    for (0..CHUNK_SIZE) |local_y| {
+        for (0..CHUNK_SIZE) |local_x| {
+            const tile_idx = local_y * CHUNK_SIZE + local_x;
+            const tile = chunk.tiles[tile_idx];
+
+            // Calculate world position
+            const world_x = chunk.world_x + @as(i32, @intCast(local_x));
+            const world_y = chunk.world_y + @as(i32, @intCast(local_y));
+
+            // Convert to screen coordinates
+            const screen_x = world_x * TILE_SIZE;
+            const screen_y = world_y * TILE_SIZE;
+
+            switch (tile.base) {
+                .mud => rl.drawRectangle(itoi(screen_x), itoi(screen_y), TILE_SIZE, TILE_SIZE, .dark_brown),
+                .rock => rl.drawRectangle(itoi(screen_x), itoi(screen_y), TILE_SIZE, TILE_SIZE, .brown),
+                .grass => rl.drawRectangle(itoi(screen_x), itoi(screen_y), TILE_SIZE, TILE_SIZE, .dark_green),
+                .coal => rl.drawRectangle(itoi(screen_x), itoi(screen_y), TILE_SIZE, TILE_SIZE, .dark_gray),
+            }
         }
     }
+}
 
-    for (0..cols + 1) |c| {
-        const x: i32 = @as(i32, @intCast(c)) * TILE_SIZE;
-        rl.drawLine(x, 0, x, rows * TILE_SIZE, rl.Color.black);
-    }
-
-    for (0..@as(usize, @intCast(rows + 1))) |r| {
-        const y: i32 = @as(i32, @intCast(r)) * TILE_SIZE;
-        rl.drawLine(0, y, cols * TILE_SIZE, y, rl.Color.black);
-    }
+fn itoi(x: anytype) i32 {
+    return @as(i32, @intCast(x));
 }
 
 pub fn render_nametag(entity_name: []const u8, pos: comp.Position, size: comp.Size) void {

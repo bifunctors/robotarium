@@ -10,15 +10,21 @@ const globals = @import("globals.zig");
 const notify = @import("ui/notification.zig").notify;
 const ftoi = @import("utils/utils.zig").ftoi;
 const Robot = @import("game/robot.zig").Robot;
+const Home = @import("game/home.zig").Home;
 const Tile = @import("map/tile.zig").Tile;
+const TILE_SIZE = @import("map/tilemap.zig").TILE_SIZE;
 const Entity = @import("map/entity_type.zig").Entity;
 const log = @import("log");
 const renderer = @import("render.zig");
+const ChunkManager = @import("map/chunk.zig").ChunkManager;
 const Player = @import("game/player.zig").Player;
 const print = std.debug.print;
 
 pub const WIDTH = 1500;
 pub const HEIGHT = 800;
+
+// This is a BANDAID FIX. Sucks and will not work in multiplayer
+var home_id: usize = 0;
 
 var camera = rl.Camera2D{
     .target = rl.Vector2.init(
@@ -37,12 +43,18 @@ pub fn main() anyerror!void {
     // Entity Component System
     comp.init_registry(ecs.Registry.init(std.heap.page_allocator));
 
+    // Create Chunk Manager
+    // Responsible For Dynamically Loading Chunks Based On Viewport
+    var chunk_manager = ChunkManager.init();
+    // defer deinit here
+
+
     // Generates a random map, this will be procedurally generated in future
     // Probably should use some sort of noise function in the future aswell
     globals.MAP = try tilemap.generate_map();
 
     // Creating a player generates them a home automatically
-    const home_id = try Player.init("Clark Kent");
+    home_id = try Player.init("Clark Kent");
 
     // Creates lua state
     try lua.init(home_id);
@@ -89,10 +101,10 @@ pub fn main() anyerror!void {
             rl.beginMode2D(camera);
             defer rl.endMode2D();
 
-            renderer.render(&camera);
+            renderer.render(&camera, &chunk_manager);
         }
 
-        renderer.render_notifications(dt);
+        // renderer.render_notifications(dt);
 
         rl.drawFPS(20, 20);
     }
@@ -110,7 +122,21 @@ fn input_system() !void {
 
     camera.zoom = std.math.exp(std.math.log(f32, std.math.e, camera.zoom) + (rl.getMouseWheelMove() * 0.1));
     if (camera.zoom > 2) camera.zoom = 2;
-    if (camera.zoom < 0.1) camera.zoom = 0.1;
+    if (camera.zoom < 0.2) camera.zoom = 0.2;
+
+    if(rl.isKeyDown(.space)) {
+        // Center On Home
+        // Get Home Position
+        // Set Camera Target To It
+
+        const home = Home.get_id(home_id) orelse return;
+        const pos = home.get_position() orelse return;
+
+        camera.target.x = pos.x * TILE_SIZE;
+        camera.target.y = pos.y * TILE_SIZE;
+
+        camera.zoom = 1;
+    }
 
     if (rl.isKeyDown(.d))
         camera.target.x += 2;

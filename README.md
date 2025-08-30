@@ -12,6 +12,8 @@ Programming game about little robots
 - [x] Add Home Names Above Their Head
 - [x] Add a standard for what is on a tile
 - [x] Inventory System
+- [x] Add Chunking
+- [ ] Add Button To Center On Home
 - [ ] Fix bug that robots see themselves if they are larger than 1x1
 - [ ] Add stacks of items to the game
 - [ ] Add more generated buildings

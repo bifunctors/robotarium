@@ -16,7 +16,7 @@ const EntityType = @import("entity_type.zig").Entity;
 
 const Arraylist = std.ArrayList;
 
-pub const MAP_WIDTH = 100;
+pub const MAP_WIDTH = 500;
 pub const TILE_SIZE = 50;
 
 pub fn generate_map() !Arraylist(Tile) {
