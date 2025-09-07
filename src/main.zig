@@ -71,6 +71,8 @@ pub fn main() anyerror!void {
     var tick_timer: f32 = 0;
     var previus_tick: u64 = 0;
 
+    try tilemap.save_map();
+
     while (!rl.windowShouldClose()) {
         const current_time = rl.getTime();
         // delta time
@@ -114,6 +116,8 @@ pub fn main() anyerror!void {
     for(robots) |robot| {
         robot.deinit();
     }
+
+    return;
 }
 
 fn input_system() !void {
