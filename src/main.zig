@@ -51,7 +51,10 @@ pub fn main() anyerror!void {
 
     // Generates a random map, this will be procedurally generated in future
     // Probably should use some sort of noise function in the future aswell
-    globals.MAP = try tilemap.generate_map();
+    // globals.MAP = try tilemap.generate_map();
+    globals.MAP = try tilemap.load_map();
+    // try tilemap.save_map();
+
 
     // Creating a player generates them a home automatically
     home_id = try Player.init("Clark Kent");
@@ -70,8 +73,6 @@ pub fn main() anyerror!void {
     var last_frame_time = rl.getTime();
     var tick_timer: f32 = 0;
     var previus_tick: u64 = 0;
-
-    try tilemap.save_map();
 
     while (!rl.windowShouldClose()) {
         const current_time = rl.getTime();
@@ -117,12 +118,15 @@ pub fn main() anyerror!void {
         robot.deinit();
     }
 
-    return;
+    try tilemap.save_map();
+    globals.MAP.deinit(std.heap.page_allocator);
 }
 
 fn input_system() !void {
-    if (rl.isKeyPressed(.q))
-        std.process.exit(0);
+    if (rl.isKeyPressed(.q)) {
+        rl.closeWindow();
+        return;
+    }
 
     camera.zoom = std.math.exp(std.math.log(f32, std.math.e, camera.zoom) + (rl.getMouseWheelMove() * 0.1));
     if (camera.zoom > 2) camera.zoom = 2;

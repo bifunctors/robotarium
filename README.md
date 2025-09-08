@@ -16,6 +16,8 @@ Programming game about little robots
 - [x] Add Button To Center On Home
 - [x] Save world to file
 - [x] Read world from file
+- [ ] Get Better Serialization
+- [ ] Serialize All Entities Aswell
 - [ ] Add Coords at top of screen
 - [ ] Add rendering optimisations to all entities
 - [ ] Fix bug that robots see themselves if they are larger than 1x1

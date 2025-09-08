@@ -62,44 +62,37 @@ pub fn random_x(len: i32) i32 {
     return num;
 }
 
+pub fn load_map() !Arraylist(Tile) {
+    var dir = std.fs.cwd();
+    var f: std.fs.File = dir.openFile("map.json", .{ }) catch |e| {
+        log.fatal("Could Not Find File", .{});
+        return e;
+    };
+    defer f.close();
+
+    var reader = f.reader(&.{});
+    var al: std.ArrayListUnmanaged(u8) = .empty;
+    var w = std.io.Writer.Allocating.fromArrayList(std.heap.page_allocator, &al);
+    _ = try reader.interface.streamRemaining(&w.writer);
+    al = w.toArrayList();
+
+    const json: std.json.Parsed(Arraylist(Tile)) = try std.json.parseFromSlice(Arraylist(Tile), std.heap.page_allocator, al.items, .{});
+    return json.value;
+}
+
 pub fn save_map() !void {
     const map = globals.MAP;
 
-    const config_folder = try kf.getPath(std.heap.page_allocator, .local_configuration);
+    var dir = std.fs.cwd();
+    var f: std.fs.File = try dir.createFile("map.json", .{ .read = true });
+    defer f.close();
 
-    if (config_folder) |folder| {
-        const config_path = try std.fs.path.join(
-            std.heap.page_allocator,
-            &[_][]const u8{ folder, "scan_game" },
-        );
-        const map_save_path = try std.fs.path.join(
-            std.heap.page_allocator,
-            &[_][]const u8{ config_path, "map.bak" },
-        );
+    const map_json = std.json.fmt(map, .{ .whitespace = .indent_2 });
+    var writer = std.io.Writer.Allocating.init(std.heap.page_allocator);
+    try map_json.format(&writer.writer);
+    const str = try writer.toOwnedSlice();
 
-        defer std.heap.page_allocator.free(config_path);
-        defer std.heap.page_allocator.free(map_save_path);
-        var buf: [200]u8 = undefined;
-        const path_formatted = std.fmt.bufPrintZ(&buf, "{s}", .{map_save_path}) catch "";
+    try f.writeAll(str);
 
-        std.fs.makeDirAbsolute(config_path) catch |err| switch (err) {
-            error.PathAlreadyExists => {},
-            else => return err,
-        };
-
-        const map_json = std.json.fmt(map, .{ .whitespace = .indent_2 });
-        var writer = std.io.Writer.Allocating.init(std.heap.page_allocator);
-        try map_json.format(&writer.writer);
-        const str = try writer.toOwnedSlice();
-
-        log.debug("Writing Save File", .{});
-
-        const save_file = try std.fs.createFileAbsolute(path_formatted, .{});
-        _ = try save_file.write(str);
-        save_file.close();
-
-    } else {
-        log.err("Could Not Save Map To File", .{});
-        log.err("Could Not Open XDG_CONFIG Directory", .{});
-    }
+    log.debug("Writing Save File", .{});
 }
